@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Змейка - 🌌 DATA STREAM</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+          font-family: 'Orbitron', sans-serif;
+          background: linear-gradient(135deg, #0a0a1a, #200020); /* Глубокий темный фон */
+          color: #00ffff; /* Неоновый циановый текст */
+          text-align: center;
+          padding: 20px;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-height: 100vh;
+        }
+        h1 {
+            color: #ff00ff; /* Неоновый пурпурный заголовок */
+            margin-bottom: 8px;
+            text-shadow: 0 0 15px rgba(255, 0, 255, 0.8);
+            letter-spacing: 2px;
+        }
+        p {
+             color: #00ffff;
+             opacity: 0.7;
+             font-size: 14px;
+        }
+        #game-area {
+          width: 500px;
+          height: 500px;
+          background-color: #0d0d1a; /* Темный фон для сетки */
+          margin: 20px auto;
+          border: 3px solid #00ffff; /* Циановая рамка */
+          border-radius: 10px;
+          box-shadow: 0 0 40px rgba(0, 255, 255, 0.6); /* Сильное свечение рамки */
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: relative;
+        }
+        /* Голографическая сетка на фоне игрового поля */
+        #game-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 24px, #1a1a33 25px),
+                        repeating-linear-gradient(90deg, transparent, transparent 24px, #1a1a33 25px);
+            opacity: 0.5;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #snake-canvas {
+            display:block;
+            border-radius:6px;
+            background:transparent; /* Чтобы видеть сетку */
+            position: relative;
+            z-index: 1;
+        }
+        #placeholder-text {
+            color:#ff00ff;
+            font-size:18px;
+            text-shadow: 0 0 10px #ff00ff;
+            position: relative;
+            z-index: 1;
+        }
+        #controls {
+          display:flex;
+          gap:15px;
+          margin-top:15px;
+          align-items:center;
+        }
+        #start-button {
+          background: #ff00ff; /* Пурпурная кнопка */
+          color: white;
+          padding: 12px 25px;
+          font-size: 16px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: transform .15s, box-shadow .15s;
+          font-family: 'Orbitron', sans-serif;
+          text-transform: uppercase;
+          box-shadow: 0 0 20px rgba(255, 0, 255, 0.7);
+        }
+        #start-button:hover { transform: translateY(-3px); box-shadow: 0 0 30px rgba(255, 64, 255, 1); }
+        #pause-button {
+          background: #00ffff; /* Циановая кнопка */
+          color:#0d0d1a;
+          padding: 12px 25px;
+          font-size:16px;
+          border:none;
+          border-radius:5px;
+          cursor:pointer;
+          font-family: 'Orbitron', sans-serif;
+          text-transform: uppercase;
+        }
+        #status {
+          margin-top: 10px; padding: 8px 15px; font-size: 14px; color: #fff;
+          border: 1px solid #00ffff; border-radius:6px; background: rgba(0,0,0,0.5);
+          text-shadow: 0 0 8px #00ffff;
+        }
+        #scoreboard {
+            margin-top:8px;
+            font-size:18px;
+            color:#ff00ff;
+            text-shadow: 0 0 5px #ff00ff;
+        }
+        #back-button {
+          position: absolute; top: 20px; left: 20px;
+          background: #333; color: white; padding: 8px 12px; border:none; border-radius:6px;
+          text-decoration: none; z-index: 20;
+          font-family: 'Orbitron', sans-serif;
+        }
+        .note { font-size:13px; color:#aaffff; margin-top:8px; }
+        a.button-like { color:white; text-decoration:none; }
+    </style>
+</head>
+<body>
+
+<a id="back-button" href="games.html">← PROTOCOL HOME</a>
+
+<h1>GAME: DATA STREAM 🐍</h1>
+<p>(CUSTOMIZATION PROTOCOL ACTIVE IN PROFILE)</p>
+
+<div id="game-area">
+    <canvas id="snake-canvas" width="500" height="500"></canvas>
+    <p id="placeholder-text">INITIATE GAME AND ARDUINO PROTOCOL</p>
+</div>
+
+<div id="controls">
+    <button id="start-button">START & CONNECT INTERFACE</button>
+    <button id="pause-button" disabled>PAUSE (DEBUG)</button>
+</div>
+
+<div id="status">STATUS: AWAITING CONNECTION</div>
+<div id="scoreboard">SCORE: 0</div>
+<div class="note">CONTROL: JOYSTICK (X/Y) OR KEYBOARD ARROWS. JOYSTICK BUTTON: PAUSE/RESUME.</div>
+
+<script>
+    // --- 🎶 АУДИО КОНТЕКСТ 🎶 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playEatSound() {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+
+        // Отправляем команду на ардуино для воспроизведения звука поедания
+        sendEatSoundToArduino();
+    }
+
+    function playMoveSound() {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+
+        // Отправляем команду на ардуино для воспроизведения звука движения
+        sendMoveSoundToArduino();
+    }
+
+    function playGameOverSound() {
+        const notes = [400, 350, 300, 250, 200];
+        const duration = 0.2;
+        let time = audioCtx.currentTime;
+
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            osc.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+
+            osc.frequency.setValueAtTime(freq, time + index * duration * 1.3);
+            osc.start(time + index * duration * 1.3);
+            osc.stop(time + (index * duration * 1.3) + duration);
+        });
+
+        // Отправляем команду на ардуино для воспроизведения звука проигрыша
+        sendGameOverToArduino();
+    }
+
+    function playLevelUpSound() {
+        const notes = [400, 600, 800];
+        const duration = 0.1;
+        let time = audioCtx.currentTime;
+
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.type = 'square';
+
+            gainNode.gain.setValueAtTime(0.02, time + index * duration * 1.5);
+            gainNode.gain.linearRampToValueAtTime(0.2, time + index * duration * 1.5 + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.001, time + (index * duration * 1.5) + duration);
+
+            osc.frequency.setValueAtTime(freq, time + index * duration * 1.5);
+            osc.start(time + index * duration * 1.5);
+            osc.stop(time + (index * duration * 1.5) + duration);
+        });
+
+        // Отправляем команду на ардуино для воспроизведения звука уровня
+        sendLevelUpToArduino();
+    }
+    // ------------------------------------
+
+    /* =========================
+       Конфигурация игры
+       ========================= */
+    const canvas = document.getElementById('snake-canvas');
+    const ctx = canvas.getContext('2d');
+    const placeholder = document.getElementById('placeholder-text');
+    const startBtn = document.getElementById('start-button');
+    const pauseBtn = document.getElementById('pause-button');
+    const statusDiv = document.getElementById('status');
+    const scoreDiv = document.getElementById('scoreboard');
+
+    const GRID_SIZE = 20;
+    const CELL = canvas.width / GRID_SIZE;
+    const TICK_MS = 120;
+
+    // thresholds джойстика
+    const LOW_THRESHOLD = 300;
+    const HIGH_THRESHOLD = 700;
+
+    /* =========================
+       Состояние и логика змейки
+       ========================= */
+    let snake = [];
+    let dir = {x: 1, y: 0};
+    let nextDir = {x:1, y:0};
+    let food = null;
+    let running = false;
+    let timerId = null;
+    let score = 0;
+    let gameOver = false;
+    let moveCounter = 0;
+
+    // 🎯 ЗАГРУЗКА НАСТРОЕК
+    let snakeCustomization = {};
+
+    function loadCustomization() {
+        snakeCustomization = JSON.parse(localStorage.getItem('snakeCustomization')) || {
+            headColor: '#ff00ff', // Дефолт на пурпурный
+            bodyColor: '#800080', // Дефолт на фиолетовый
+            foodColor: '#ff0000', // Дефолт на красный
+            shape: 'round'
+        };
+    }
+
+    function resetGame() {
+      loadCustomization();
+
+      snake = [];
+      const mid = Math.floor(GRID_SIZE/2);
+      snake.push({x: mid-1, y: mid});
+      snake.push({x: mid, y: mid});
+      snake.push({x: mid+1, y: mid});
+      dir = {x:-1, y:0}; nextDir = {x:-1,y:0};
+      placeFood();
+      score = 0;
+      gameOver = false;
+      moveCounter = 0;
+      updateScore();
+      sendReset(); // ОТПРАВКА СБРОСА ПРИ НАЧАЛЕ ИГРЫ
+    }
+
+    function placeFood() {
+      while(true){
+        const fx = Math.floor(Math.random()*GRID_SIZE);
+        const fy = Math.floor(Math.random()*GRID_SIZE);
+        if (!snake.some(s => s.x===fx && s.y===fy)) { food = {x:fx,y:fy}; break; }
+      }
+    }
+
+    function draw() {
+      // Очищаем Canvas, чтобы видеть CSS-сетку
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // --- Еда: DATA NODE ---
+      if (food) {
+        ctx.fillStyle = snakeCustomization.foodColor;
+        // Эффект свечения еды
+        ctx.shadowColor = snakeCustomization.foodColor;
+        ctx.shadowBlur = 15;
+
+        const x = food.x*CELL+2;
+        const y = food.y*CELL+2;
+        const w = CELL-4;
+        const h = CELL-4;
+        roundRectFill(x, y, w, h, 6);
+      }
+
+      // --- Змейка: DATA STREAM ---
+      for (let i=0;i<snake.length;i++){
+        ctx.fillStyle = i===0 ? snakeCustomization.headColor : snakeCustomization.bodyColor;
+
+        // Свечение головы сильнее, чем тела
+        if(i === 0) {
+            ctx.shadowColor = snakeCustomization.headColor;
+            ctx.shadowBlur = 20;
+        } else {
+            ctx.shadowColor = snakeCustomization.bodyColor;
+            ctx.shadowBlur = 8;
+        }
+
+        const x = snake[i].x*CELL+2;
+        const y = snake[i].y*CELL+2;
+        const w = CELL-4;
+        const h = CELL-4;
+        roundRectFill(x, y, w, h, 6);
+      }
+
+      // Сброс тени для следующего кадра
+      ctx.shadowBlur = 0;
+    }
+
+    function roundRectFill(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function tick() {
+      if (!running) return;
+
+      if (!(nextDir.x === -dir.x && nextDir.y === -dir.y)) dir = nextDir;
+
+      const newHead = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
+
+      // Проход сквозь стены
+      if (newHead.x < 0) newHead.x = GRID_SIZE - 1;
+      if (newHead.x >= GRID_SIZE) newHead.x = 0;
+      if (newHead.y < 0) newHead.y = GRID_SIZE - 1;
+      if (newHead.y >= GRID_SIZE) newHead.y = 0;
+
+      // Проверка на столкновение с собой
+      if (snake.some((s, idx) => idx>0 && s.x===newHead.x && s.y===newHead.y)) {
+        endGame();
+        return;
+      }
+
+      snake.unshift(newHead);
+
+      // Звук движения (каждые 3 хода для избежания спама)
+      moveCounter++;
+      if (moveCounter % 3 === 0) {
+          playMoveSound();
+      }
+
+      // Проверка на еду
+      if (food && newHead.x===food.x && newHead.y===food.y) {
+        // ИСПРАВЛЕНО: 1 очко за 1 кубик
+        score++;
+        playEatSound(); // Звук поедания еды
+
+        // Звук уровня каждые 5 очков
+        if (score % 5 === 0) {
+            playLevelUpSound();
+        }
+
+        placeFood();
+        updateScore();
+        let currentPoints = parseInt(localStorage.getItem("userPoints") || '0');
+        localStorage.setItem("userPoints", currentPoints + 1);
+
+        // ОТПРАВКА СЧЕТА НА ARDUINO
+        sendScoreToArduino(score);
+
+      } else {
+        snake.pop();
+      }
+
+      draw();
+      timerId = setTimeout(tick, TICK_MS);
+    }
+
+    function startGame() {
+      resetGame();
+      placeholder.style.display = 'none';
+      canvas.style.display = 'block';
+      running = true;
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      statusDiv.textContent = 'STATUS: STREAM INITIATED ✅';
+      tick();
+    }
+
+    function pauseGame() {
+      if (!running) return;
+      running = false;
+      clearTimeout(timerId);
+      statusDiv.textContent = 'STATUS: PAUSED (DEBUG MODE)';
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+    }
+
+    function resumeGame() {
+      if (running || gameOver) return;
+      running = true;
+      pauseBtn.disabled = false;
+      startBtn.disabled = true;
+      statusDiv.textContent = 'STATUS: STREAM RECONNECTED';
+      tick();
+    }
+
+    function endGame() {
+      running = false;
+      clearTimeout(timerId);
+      gameOver = true;
+      statusDiv.textContent = `[FAILURE] CORE COLLISION. SCORE: ${score}`;
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+
+      playGameOverSound(); // Звук проигрыша
+
+      // ОТПРАВКА КОМАНДЫ GAME_OVER НА ARDUINO (запустит красный LED и мелодию)
+      sendGameOverToArduino();
+
+      // Сохранение общего счета в профиль
+      let currentPoints = parseInt(localStorage.getItem("userPoints") || '0');
+      localStorage.setItem("userPoints", currentPoints + score);
+    }
+
+    function updateScore() {
+      scoreDiv.textContent = `SCORE: ${score}`;
+    }
+
+    /* =========================
+       Управление (Клавиатура/Arduino) и Коммуникация
+       ========================= */
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') trySetDir(-1,0);
+      if (e.key === 'ArrowRight') trySetDir(1,0);
+      if (e.key === 'ArrowUp') trySetDir(0,-1);
+      if (e.key === 'ArrowDown') trySetDir(0,1);
+      if (e.key === ' ' || e.key === 'Enter') {
+        if (!running && !gameOver) resumeGame();
+        else if (running) pauseGame();
+      }
+    });
+
+    function trySetDir(x,y) {
+      if (x === -dir.x && y === -dir.y) return;
+      nextDir = {x,y};
+    }
+
+    let port = null;
+    let reader = null;
+    let writer = null;
+    let keepReading = false;
+    let lastJoystickTime = 0;
+
+    function logStatus(t) {
+      statusDiv.textContent = t;
+    }
+
+    // ФУНКЦИИ ОТПРАВКИ ДАННЫХ НА ARDUINO
+
+    async function sendScoreToArduino(newScore) {
+        if (writer) await writer.write(`SCORE:${newScore}\n`);
+    }
+
+    async function sendEatSoundToArduino() {
+        if (writer) await writer.write(`BUZZER_EAT\n`);
+    }
+
+    async function sendMoveSoundToArduino() {
+        if (writer) await writer.write(`BUZZER_MOVE\n`);
+    }
+
+    async function sendGameOverToArduino() {
+        if (writer) await writer.write(`BUZZER_LOSE\n`);
+    }
+
+    async function sendLevelUpToArduino() {
+        if (writer) await writer.write(`BUZZER_LEVEL\n`);
+    }
+
+    async function sendReset() {
+        if (writer) await writer.write(`RESET\n`);
+    }
+
+    async function connectToArduino() {
+      if (!('serial' in navigator)) {
+        logStatus('⚠️ WEB SERIAL API UNAVAILABLE.');
+        return;
+      }
+      try {
+        logStatus('REQUESTING PORT ACCESS...');
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+
+        // НАСТРОЙКА ДЛЯ ЗАПИСИ ДАННЫХ
+        const encoder = new TextEncoderStream();
+        encoder.readable.pipeTo(port.writable);
+        writer = encoder.writable.getWriter();
+
+        logStatus('PORT ACCESS GRANTED. WAITING FOR DATA...');
+        readLoop();
+        startGame();
+      } catch (err) {
+        console.error(err);
+        logStatus('CONNECTION ERROR: ' + (err.message || err));
+      }
+    }
+
+    async function readLoop() {
+      if (!port) return;
+      keepReading = true;
+      try {
+        const textDecoder = new TextDecoderStream();
+        const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+        reader = textDecoder.readable.getReader();
+        while (keepReading) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (!value) continue;
+          const lines = value.split(/\r?\n/);
+          for (const raw of lines) {
+            const line = raw.trim();
+            if (!line) continue;
+            processArduinoLine(line);
+          }
+        }
+      } catch (err) {
+        console.error("READ ERROR:", err);
+        logStatus('PORT READ FAILURE: ' + err.message);
+      } finally {
+        if (reader) { try { reader.releaseLock(); } catch(e){} reader = null; }
+      }
+    }
+
+    function processArduinoLine(line) {
+      let clean = line.replace(/^RAW:/i, '');
+      clean = clean.trim();
+      const parts = clean.split(/[,;:\s]+/).filter(p => p.length>0);
+      const nums = parts.map(p => {
+        const n = parseInt(p, 10);
+        return isNaN(n) ? null : n;
+      });
+      if (!nums.length) return;
+
+      let x = null, y = null, btn = 0;
+      if (nums.length >= 2 && nums[0] !== null && nums[1] !== null) {
+        x = nums[0]; y = nums[1]; btn = nums[2] || 0;
+      } else return;
+
+      logStatus(`JOYSTICK INPUT: X=${x}, Y=${y}, BTN=${btn} | ACTIVE ✅`);
+
+      const now = Date.now();
+      const MIN_INTERVAL = 80;
+      if (now - lastJoystickTime < MIN_INTERVAL) {
+        if (btn === 1) handleJoyButton();
+        return;
+      }
+
+      if (x < LOW_THRESHOLD && Math.abs(y-512) < 200) {
+        trySetDir(-1,0); lastJoystickTime = now;
+      } else if (x > HIGH_THRESHOLD && Math.abs(y-512) < 200) {
+        trySetDir(1,0); lastJoystickTime = now;
+      } else if (y < LOW_THRESHOLD && Math.abs(x-512) < 200) {
+        trySetDir(0,-1); lastJoystickTime = now;
+      } else if (y > HIGH_THRESHOLD && Math.abs(x-512) < 200) {
+        trySetDir(0,1); lastJoystickTime = now;
+      } else {
+        const dx = Math.abs(x-512);
+        const dy = Math.abs(y-512);
+        if (dx > dy && dx > 100) {
+          if (x < 512) trySetDir(-1,0); else trySetDir(1,0); lastJoystickTime = now;
+        } else if (dy > dx && dy > 100) {
+          if (y < 512) trySetDir(0,-1); else trySetDir(0,1); lastJoystickTime = now;
+        }
+      }
+
+      if (btn === 1) handleJoyButton();
+    }
+
+    function handleJoyButton() {
+      if (gameOver) return;
+      if (running) {
+        pauseGame();
+      } else {
+        resumeGame();
+      }
+    }
+
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      startBtn.textContent = 'CONNECTING...';
+      await connectToArduino();
+      startBtn.textContent = 'INITIATED';
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      if (running) pauseGame();
+    });
+
+    async function disconnectSerial() {
+      keepReading = false;
+      if (reader) { try { await reader.cancel(); } catch(e){} try { reader.releaseLock(); } catch(e){} reader = null; }
+      if (writer) { try { await writer.close(); } catch(e){} writer = null; }
+      if (port) {
+        try { await port.close(); } catch(e) {}
+        port = null;
+      }
+    }
+    window.addEventListener('beforeunload', async (e) => {
+      await disconnectSerial();
+    });
+
+    resetGame();
+    draw();
+    updateScore();
+</script>
+
+</body>
+</html>

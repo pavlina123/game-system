@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход — 🔓 AUTHORIZATION GATE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0d0d1a, #000000); /* Ультра-темный фон */
+            color: #ff00ff; /* Пурпурный текст */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Задний фон: Анимированная голографическая сетка */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 19px, #1a1a33 20px),
+                        repeating-linear-gradient(90deg, transparent, transparent 19px, #1a1a33 20px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+            animation: moveBg 60s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes moveBg {
+            from { background-position: 0 0; }
+            to { background-position: 500px 500px; }
+        }
+
+        h2 {
+            font-size: 32px;
+            margin-bottom: 30px;
+            color: #00ffff; /* Циановый заголовок */
+            text-shadow: 0 0 15px #00ffff, 0 0 30px rgba(0, 255, 255, 0.6);
+            letter-spacing: 2px;
+            z-index: 1;
+            text-transform: uppercase;
+        }
+
+        form {
+            background: rgba(255, 0, 255, 0.05); /* Легкий пурпурный оттенок */
+            padding: 40px 35px;
+            border-radius: 10px;
+            width: 320px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid #ff00ff; /* Четкая пурпурная граница */
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
+            transition: all 0.4s ease;
+            z-index: 1;
+        }
+
+        form:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 50px rgba(255, 0, 255, 0.8);
+        }
+
+        input {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ff00ff; /* Пурпурная граница */
+            border-radius: 5px;
+            background: rgba(0,0,0,0.4);
+            color: #ff00ff;
+            font-size: 15px;
+            outline: none;
+            transition: 0.3s;
+            text-shadow: 0 0 5px #ff00ff;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        input:focus {
+            border-color: #00ffff; /* Фокус на циановый */
+            box-shadow: 0 0 15px #00ffff;
+            background: rgba(0,0,0,0.7);
+            color: #00ffff;
+            text-shadow: 0 0 8px #00ffff;
+        }
+
+        /* Изменение цвета плейсхолдера */
+        input::placeholder {
+          color: rgba(255, 0, 255, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #00ffff; /* Циановая кнопка */
+            border: none;
+            border-radius: 5px;
+            color: #0d0d1a; /* Темный текст на циане */
+            font-size: 17px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        button:hover {
+            background: #ff00ff; /* Смена на пурпурный при наведении */
+            color: white;
+            box-shadow: 0 0 25px #ff00ff;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-size: 14px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .success {
+            color: #ccff33; /* Яркий лаймовый для успеха */
+            text-shadow: 0 0 10px #ccff33;
+        }
+
+        .error {
+            color: #ff6666; /* Яркий красный для ошибки */
+            text-shadow: 0 0 10px #ff6666;
+        }
+
+        .register-link {
+            margin-top: 25px;
+            font-size: 14px;
+            color: #ff00ff;
+            text-decoration: none;
+            display: inline-block;
+            transition: color 0.3s;
+            text-shadow: 0 0 5px #ff00ff;
+            text-transform: uppercase;
+        }
+
+        .register-link:hover {
+            color: #00ffff;
+            text-decoration: underline;
+            text-shadow: 0 0 8px #00ffff;
+        }
+
+        footer {
+            position: absolute;
+            bottom: 15px;
+            font-size: 12px;
+            opacity: 0.5;
+            z-index: 1;
+            font-family: "Segoe UI", sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+<div class="particles"></div>
+
+<h2>AUTHORIZATION GATE 🔑</h2>
+
+<form id="loginForm">
+    <input type="email" id="email" placeholder="SECURE EMAIL ID" required><br>
+    <input type="password" id="password" placeholder="ENCRYPTION KEY" required><br>
+    <button type="submit">ACCESS SYSTEM</button>
+    <a href="register" class="register-link">NEED ACCESS NODE? REGISTER</a>
+</form>
+
+<p id="message"></p>
+
+<footer>SYSTEM STATUS: AWAITING CREDENTIALS (2025)</footer>
+
+<script>
+    document.getElementById("loginForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const user = {
+            email: document.getElementById("email").value.trim(),
+            password: document.getElementById("password").value.trim()
+        };
+
+        try {
+            const response = await fetch("http://localhost:8081/api/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(user)
+            });
+
+            if (response.ok) {
+                const foundUser = await response.json();
+
+                if (foundUser.username && foundUser.email) {
+                    localStorage.setItem("currentUser", JSON.stringify({
+                        username: foundUser.username,
+                        email: foundUser.email
+                    }));
+                } else {
+                    localStorage.setItem("currentUser", JSON.stringify({
+                        username: foundUser.email.split('@')[0] || "SYSTEM_USER",
+                        email: foundUser.email
+                    }));
+                }
+                document.getElementById("message").innerHTML =
+                    "<span class='success'>AUTHORIZATION GRANTED ✅</span>";
+
+                setTimeout(() => {
+                    window.location.href = "profile"; // Перенаправление
+                }, 1500);
+
+            } else {
+                document.getElementById("message").innerHTML =
+                    "<span class='error'>[ERROR]: INVALID CREDENTIALS ❌</span>";
+            }
+        } catch (err) {
+            document.getElementById("message").innerHTML =
+                "<span class='error'>[CONNECTION FAILURE] SERVER OFFLINE ⚠️</span>";
+        }
+    });
+</script>
+
+</body>
+</html>

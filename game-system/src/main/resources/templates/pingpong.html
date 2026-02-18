@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>🎾 Пин-Понг - ⚡ PULSE PONG</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+          font-family: 'Orbitron', sans-serif;
+          background: linear-gradient(135deg, #0a0a1a, #200020); /* Глубокий темный фон */
+          color: #00ffff;
+          text-align: center;
+          margin: 0;
+          padding: 20px;
+        }
+        h1 {
+            color: #ff00ff; /* Пурпурный заголовок */
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px rgba(255, 0, 255, 0.8);
+            letter-spacing: 2px;
+        }
+        #game-area {
+          width: 600px;
+          height: 400px;
+          background: #0d0d1a; /* Темный, почти черный фон */
+          border: 3px solid #00ffff; /* Циановая рамка */
+          border-radius: 5px;
+          margin: 20px auto;
+          box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+          position: relative;
+        }
+        /* Анимированная сетка на заднем плане */
+        #game-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 19px, #1a1a33 20px),
+                        repeating-linear-gradient(90deg, transparent, transparent 19px, #1a1a33 20px);
+            opacity: 0.2;
+            z-index: 0;
+            pointer-events: none;
+        }
+        #start-button, #play-button {
+          background: #ff00ff; /* Пурпурная кнопка */
+          color: white;
+          padding: 15px 30px;
+          font-size: 20px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          margin-top: 15px;
+          font-family: 'Orbitron', sans-serif;
+          text-transform: uppercase;
+          box-shadow: 0 0 20px rgba(255, 0, 255, 0.7);
+          transition: all 0.3s;
+        }
+        #start-button:hover, #play-button:hover {
+            background: #ff40ff;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 64, 255, 1);
+        }
+        #status {
+          margin-top: 15px;
+          font-size: 16px;
+          color: #fff;
+          text-shadow: 0 0 8px #00ffff;
+        }
+    </style>
+</head>
+<body>
+
+<h1>PULSE PONG // ARDUINO INTERFACE</h1>
+<div id="game-area">
+    <canvas id="pong" width="600" height="400"></canvas>
+</div>
+
+<button id="start-button">CONNECT ARDUINO INTERFACE</button>
+<button id="play-button" style="display:none;">INITIATE PULSE</button>
+
+<div id="status">STATUS: AWAITING CONNECTION...</div>
+
+<script>
+    // --- 🎶 АУДИО КОНТЕКСТ 🎶 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playPaddleHitSound() {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+
+        // Отправляем команду на ардуино для воспроизведения звука удара
+        sendPaddleHitToArduino();
+    }
+
+    function playWallHitSound() {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+
+        // Отправляем команду на ардуино для воспроизведения звука удара о стену
+        sendWallHitToArduino();
+    }
+
+    function playScoreSound() {
+        const notes = [600, 800, 1000];
+        const duration = 0.15;
+        let time = audioCtx.currentTime;
+
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.type = 'square';
+
+            gainNode.gain.setValueAtTime(0.02, time + index * duration * 1.2);
+            gainNode.gain.linearRampToValueAtTime(0.2, time + index * duration * 1.2 + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.001, time + (index * duration * 1.2) + duration);
+
+            osc.frequency.setValueAtTime(freq, time + index * duration * 1.2);
+            osc.start(time + index * duration * 1.2);
+            osc.stop(time + (index * duration * 1.2) + duration);
+        });
+
+        // Отправляем команду на ардуино для воспроизведения звука счета
+        sendScoreSoundToArduino();
+    }
+
+    function playGameOverSound() {
+        const notes = [300, 250, 200, 150];
+        const duration = 0.3;
+        let time = audioCtx.currentTime;
+
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            osc.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+
+            osc.frequency.setValueAtTime(freq, time + index * duration * 1.5);
+            osc.start(time + index * duration * 1.5);
+            osc.stop(time + (index * duration * 1.5) + duration);
+        });
+
+        // Отправляем команду на ардуино для воспроизведения звука проигрыша
+        sendGameOverToArduino();
+    }
+    // ------------------------------------
+
+    let port, reader, writer;
+    const canvas = document.getElementById("pong");
+    const ctx = canvas.getContext("2d");
+    const statusDiv = document.getElementById("status");
+    let gameRunning = false;
+
+    // Параметры игры
+    let paddleHeight = 80;
+    let paddleY = 160;
+    let ballRadius = 8; // Определяем радиус мяча
+    let paddleWidth = 10; // Определяем ширину ракетки
+    let ballX = 300, ballY = 200, ballDX = 4, ballDY = 4;
+    let score = 0;
+
+    function drawGame() {
+      // Очистка с прозрачностью, чтобы видеть CSS сетку
+      ctx.fillStyle = "rgba(13, 13, 26, 0.1)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // --- Рисуем центральную разделительную линию ---
+      ctx.strokeStyle = '#00ffff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]); // Сброс
+
+      // --- Ракетка: Защитный Щит (Щит всегда циановый) ---
+      ctx.fillStyle = "#00ffff";
+      ctx.shadowColor = "#00ffff";
+      ctx.shadowBlur = 15;
+      ctx.fillRect(20, paddleY, paddleWidth, paddleHeight);
+      ctx.shadowBlur = 0; // Сброс тени
+
+      // --- Мяч: Энергетический Импульс (Пульсирующий пурпурный) ---
+      ctx.beginPath();
+      ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "#ff00ff";
+      ctx.shadowColor = "#ff00ff";
+      ctx.shadowBlur = 20;
+      ctx.fill();
+      ctx.shadowBlur = 0; // Сброс тени
+
+      // --- Правая граница (Визуальный барьер) ---
+      ctx.fillStyle = "rgba(255, 0, 255, 0.3)";
+      ctx.fillRect(canvas.width - 10, 0, 10, canvas.height);
+
+
+      // --- Счёт: Стильный вывод ---
+      ctx.fillStyle = "#ff00ff";
+      ctx.font = "bold 24px Orbitron";
+      ctx.shadowColor = "#ff00ff";
+      ctx.shadowBlur = 10;
+      ctx.textAlign = "right";
+      ctx.fillText("SCORE: " + score, 590, 30);
+      ctx.shadowBlur = 0; // Сброс тени
+    }
+
+    function updateGame() {
+      if (!gameRunning) return;
+
+      // 1. Движение мяча
+      ballX += ballDX;
+      ballY += ballDY;
+
+      // 2. Отскок от верхней и нижней стены
+      if (ballY - ballRadius <= 0 || ballY + ballRadius >= canvas.height) {
+          ballDY *= -1;
+          playWallHitSound(); // Звук удара о стену
+      }
+
+      // 3. ОТСКОК ОТ ПРАВОЙ СТЕНЫ (ИСПРАВЛЕНО - МЯЧ НЕ УЛЕТАЕТ ВПРАВО)
+      // Если мяч дошёл до правой стены, он отскакивает обратно.
+      if (ballX + ballRadius >= canvas.width - paddleWidth) { // - paddleWidth, чтобы отскакивал от фиолетовой полосы
+          ballDX *= -1;
+          playWallHitSound(); // Звук удара о стену
+      }
+
+
+      // 4. ОТСКОК ОТ РАКЕТКИ
+      // Проверка на столкновение с ракеткой (левая сторона)
+      if (
+          ballX - ballRadius <= 20 + paddleWidth && // Левый край мяча касается правого края ракетки
+          ballY + ballRadius > paddleY &&          // Мяч ниже верхней границы ракетки
+          ballY - ballRadius < paddleY + paddleHeight && // Мяч выше нижней границы ракетки
+          ballDX < 0 // Мяч движется влево
+      ) {
+          // Отскок
+          ballDX *= -1.05; // Ускорение при отскоке
+          score++;
+
+          playPaddleHitSound(); // Звук удара о ракетку
+          playScoreSound(); // Звук получения очка
+
+          // Обновление локального хранилища (для отчета)
+          let currentPoints = parseInt(localStorage.getItem("userPoints") || '0');
+          localStorage.setItem("userPoints", currentPoints + 1);
+
+          sendScore(score);
+      }
+
+      // 5. Проигрыш (мяч улетел влево, за ракетку)
+      if (ballX - ballRadius < 0) {
+          playGameOverSound(); // Звук проигрыша
+          sendLose();
+          gameOver();
+          return;
+      }
+
+      drawGame();
+      requestAnimationFrame(updateGame);
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      ctx.fillStyle = "#ff0000";
+      ctx.font = "40px Orbitron";
+      ctx.shadowColor = "#ff0000";
+      ctx.shadowBlur = 20;
+      ctx.textAlign = "center";
+      ctx.fillText("INTERFACE CRITICAL FAILURE", canvas.width / 2, canvas.height / 2);
+      ctx.shadowBlur = 0;
+      document.getElementById("play-button").style.display = "block";
+    }
+
+    function startGame() {
+      score = 0;
+      // Сброс позиции и начальной скорости. Мяч должен лететь в сторону ракетки, то есть влево (ballDX < 0).
+      ballX = 300; ballY = 200;
+      ballDX = -4; ballDY = 4; // ИСПРАВЛЕНО: Установка отрицательной DX, чтобы мяч летел к ракетке
+      paddleY = 160;
+      document.getElementById("play-button").style.display = "none";
+      gameRunning = true;
+      sendReset();
+      updateGame();
+    }
+
+    // === Подключение Arduino ===
+    async function connectToArduino() {
+      if (!('serial' in navigator)) {
+        statusDiv.textContent = "❌ WEB SERIAL API UNAVAILABLE.";
+        return;
+      }
+      try {
+        port = await navigator.serial.requestPort();
+        // ВАЖНО: Убедитесь, что Arduino настроен на 115200
+        await port.open({ baudRate: 115200 });
+
+        const decoder = new TextDecoderStream();
+        const readableStream = port.readable.pipeThrough(decoder);
+        reader = readableStream.getReader();
+
+        const encoder = new TextEncoderStream();
+        encoder.readable.pipeTo(port.writable);
+        writer = encoder.writable.getWriter();
+
+        statusDiv.textContent = "✅ ARDUINO PROTOCOL ACTIVE!";
+        document.getElementById("start-button").style.display = "none";
+        document.getElementById("play-button").style.display = "block";
+        readArduinoData();
+      } catch (error) {
+        statusDiv.textContent = "[CONNECTION ERROR]: " + error;
+      }
+    }
+
+    async function readArduinoData() {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        // В Arduino код должен отправлять данные в формате: "joyX,joyY\n"
+        if (value) processInput(value.trim());
+      }
+    }
+
+    function processInput(data) {
+      // ВАЖНО: Если Arduino отправляет только одно число (JoyY), используйте:
+      // const joyY = Number(data);
+      // Если Arduino отправляет: "512,100\n", используйте:
+      const parts = data.split(",");
+      if (parts.length < 2) return; // Убрал проверку < 3
+      const [, joyY] = parts.map(Number); // Берем только JoyY (второе число)
+
+      const speed = 10;
+
+      // Движение ракетки
+      if (joyY < 400 && paddleY > 0) paddleY -= speed; // Движение вверх
+      if (joyY > 600 && paddleY + paddleHeight < canvas.height) paddleY += speed; // Движение вниз
+    }
+
+    // Функции отправки команд на Arduino
+    async function sendScore(val) {
+      if (writer) await writer.write(`SCORE:${val}\n`);
+    }
+
+    async function sendPaddleHitToArduino() {
+      if (writer) await writer.write("BUZZER_PADDLE\n");
+    }
+
+    async function sendWallHitToArduino() {
+      if (writer) await writer.write("BUZZER_WALL\n");
+    }
+
+    async function sendScoreSoundToArduino() {
+      if (writer) await writer.write("BUZZER_SCORE\n");
+    }
+
+    async function sendGameOverToArduino() {
+      if (writer) await writer.write("BUZZER_LOSE\n");
+    }
+
+    async function sendLose() {
+      if (writer) await writer.write("LOSE\n");
+    }
+
+    async function sendReset() {
+      if (writer) await writer.write("RESET\n");
+    }
+
+    // --- Управление клавиатурой (Для тестирования) ---
+    document.addEventListener('keydown', event => {
+        if (!gameRunning) return;
+        const speed = 10;
+        if (event.key === 'ArrowUp' && paddleY > 0) paddleY -= speed;
+        if (event.key === 'ArrowDown' && paddleY + paddleHeight < canvas.height) paddleY += speed;
+    });
+
+    document.getElementById("start-button").onclick = connectToArduino;
+    document.getElementById("play-button").onclick = startGame;
+
+    drawGame(); // Первоначальный рендер
+</script>
+</body>
+</html>

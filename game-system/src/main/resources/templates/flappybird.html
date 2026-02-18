@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Flappy Bird - 🌌 CYBER RUN</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a, #200020);
+            color: #00ffff;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #ff00ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(255, 0, 255, 0.8);
+            letter-spacing: 2px;
+        }
+        p {
+             color: #00ffff;
+             opacity: 0.7;
+             font-size: 14px;
+        }
+        #game-area {
+            width: 600px;
+            height: 400px;
+            background-color: #000000;
+            margin: 20px auto;
+            border: 3px solid #00ffff;
+            border-radius: 5px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        /* Анимация мигающей сетки для фона */
+        #game-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 19px, #1a1a33 20px),
+                        repeating-linear-gradient(90deg, transparent, transparent 19px, #1a1a33 20px);
+            opacity: 0.5;
+            z-index: 0;
+            animation: pulse-grid 5s infinite alternate;
+        }
+        @keyframes pulse-grid {
+            0% { opacity: 0.4; }
+            100% { opacity: 0.7; }
+        }
+
+        #start-button, #play-button {
+            background: #ff00ff;
+            color: white;
+            padding: 15px 30px;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.7);
+        }
+        #start-button:hover, #play-button:hover {
+            background: #ff40ff;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 64, 255, 1);
+        }
+        #status {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            width: 580px;
+            text-shadow: 0 0 8px #00ffff;
+        }
+        #flappybird-canvas {
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+<h1>FLAPPY BIRD // CYBER-RUN 🐥</h1>
+<p>PRESS SPACEBAR TO JUMP (REQUIRES ARDUINO INTERFACE CONNECTION)</p>
+
+<div id="game-area">
+    <canvas id="flappybird-canvas" width="600" height="400" style="display:none;"></canvas>
+    <p id="placeholder-text">INITIATE ARDUINO CONNECTION</p>
+</div>
+
+<button id="start-button">CONNECT ARDUINO INTERFACE</button>
+<button id="play-button" style="display:none;">START SIMULATION</button>
+
+<div id="status">STATUS: AWAITING CONNECTION</div>
+
+<script>
+    // --- 🎶 АУДИО КОНТЕКСТ 🎶 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playJumpSound() {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+
+        // Отправляем команду на ардуино для воспроизведения звука прыжка
+        sendJumpSoundToArduino();
+    }
+
+    function playGameOverSound() {
+        const notes = [100, 75, 50];
+        const duration = 0.2;
+        let time = audioCtx.currentTime;
+
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            osc.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+
+            osc.frequency.setValueAtTime(freq, time + index * duration * 1.5);
+            osc.start(time + index * duration * 1.5);
+            osc.stop(time + (index * duration * 1.5) + duration);
+        });
+
+        // Отправляем команду на ардуино для воспроизведения звука проигрыша
+        sendGameOverToArduino();
+    }
+
+    function playFanfare() {
+        const notes = [600, 700, 800, 1200];
+        const duration = 0.15;
+        let time = audioCtx.currentTime;
+
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.type = 'triangle';
+
+            gainNode.gain.setValueAtTime(0.01, time + index * duration * 1.1);
+            gainNode.gain.linearRampToValueAtTime(0.3, time + index * duration * 1.1 + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.001, time + (index * duration * 1.1) + duration);
+
+            osc.frequency.setValueAtTime(freq, time + index * duration * 1.1);
+            osc.start(time + index * duration * 1.1);
+            osc.stop(time + (index * duration * 1.1) + duration);
+        });
+
+        // Отправляем команду на ардуино для воспроизведения фанфары
+        sendFanfareToArduino();
+    }
+    // ------------------------------------
+
+    let port, reader, writer;
+    let gameRunning = false;
+    let birdY = 200, birdVelocity = 0, gravity = 0.5, jumpPower = -8;
+    let pipes = [], frameCount = 0, score = 0;
+    const statusDiv = document.getElementById('status');
+    const canvas = document.getElementById('flappybird-canvas');
+    const ctx = canvas.getContext('2d');
+    const playButton = document.getElementById('play-button');
+    let birdCustomization = { color: '#ff00ff', shape: 'diamond' };
+
+    function loadCustomization() {
+        try {
+             birdCustomization = JSON.parse(localStorage.getItem('flappyBirdCustomization')) || { color: '#ff00ff', shape: 'diamond' };
+        } catch (e) {
+             console.error("Error loading customization from Local Storage:", e);
+             birdCustomization = { color: '#ff00ff', shape: 'diamond' };
+        }
+    }
+
+    function drawBird() {
+        ctx.fillStyle = birdCustomization.color;
+        ctx.shadowColor = birdCustomization.color;
+        ctx.shadowBlur = 15;
+
+        const size = 15;
+        const x = 100;
+        const y = birdY;
+
+        switch (birdCustomization.shape) {
+            case 'square':
+                ctx.fillRect(x - size, y - size, size * 2, size * 2);
+                break;
+            case 'diamond':
+                ctx.beginPath();
+                ctx.moveTo(x, y - size * 1.5);
+                ctx.lineTo(x + size, y);
+                ctx.lineTo(x, y + size * 1.5);
+                ctx.lineTo(x - size, y);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            case 'circle':
+            default:
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+        }
+
+        ctx.shadowBlur = 0;
+    }
+
+    function drawPipes() {
+        const pipeColor = "#00ffff";
+        pipes.forEach(pipe => {
+            ctx.fillStyle = pipeColor;
+            ctx.shadowColor = pipeColor;
+            ctx.shadowBlur = 10;
+            ctx.fillRect(pipe.x, 0, 50, pipe.top);
+            ctx.fillRect(pipe.x, pipe.bottom, 50, canvas.height - pipe.bottom);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "rgba(255, 0, 255, 0.2)";
+            ctx.fillRect(pipe.x, pipe.top, 50, pipe.bottom - pipe.top);
+        });
+    }
+
+    function updateGame() {
+        if (!gameRunning) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        birdVelocity += gravity;
+        birdY += birdVelocity;
+
+        if (frameCount % 100 === 0) {
+            const top = Math.random() * 150 + 50;
+            const gap = 140;
+            pipes.push({ x: canvas.width, top: top, bottom: top + gap, passed: false });
+        }
+
+        pipes.forEach(pipe => pipe.x -= 2);
+
+        const birdSize = 15;
+        const birdLeft = 100 - birdSize;
+        const birdRight = 100 + birdSize;
+        const birdTop = birdY - birdSize;
+        const birdBottom = birdY + birdSize;
+
+        for (let pipe of pipes) {
+            if (birdRight > pipe.x && birdLeft < pipe.x + 50) {
+                if (birdTop < pipe.top || birdBottom > pipe.bottom) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            if (!pipe.passed && pipe.x + 50 < birdLeft) {
+                pipe.passed = true;
+                score++;
+
+                // 🎶 Звонкая фанфара за каждое очко!
+                playFanfare();
+                // -----------------------------
+
+                try {
+                    let currentPoints = parseInt(localStorage.getItem("userPoints") || '0');
+                    localStorage.setItem("userPoints", currentPoints + 10);
+                } catch (e) {
+                    console.error("Local Storage error:", e);
+                }
+
+                sendScoreToArduino(score);
+            }
+        }
+
+        if (birdY > canvas.height || birdY < 0) {
+            gameOver();
+            return;
+        }
+
+        drawPipes();
+        drawBird();
+        pipes = pipes.filter(p => p.x > -50);
+
+        frameCount++;
+
+        ctx.fillStyle = "#ff00ff";
+        ctx.font = "24px Orbitron";
+        ctx.shadowColor = "#ff00ff";
+        ctx.shadowBlur = 10;
+        ctx.textAlign = "left";
+        ctx.fillText("SCORE: " + score, 10, 30);
+        ctx.shadowBlur = 0;
+
+        requestAnimationFrame(updateGame);
+    }
+
+    function gameOver() {
+        gameRunning = false;
+
+        playGameOverSound();
+
+        ctx.fillStyle = "#ff0000";
+        ctx.font = "40px Orbitron";
+        ctx.shadowColor = "#ff0000";
+        ctx.shadowBlur = 20;
+        ctx.textAlign = "center";
+        ctx.fillText("[FATAL ERROR] SIMULATION ENDED", canvas.width / 2, canvas.height / 2);
+        ctx.shadowBlur = 0;
+        playButton.style.display = 'block';
+        sendGameOverToArduino();
+    }
+
+    function jump() {
+        if (!gameRunning) return;
+        birdVelocity = jumpPower;
+
+        playJumpSound();
+    }
+
+    function startFlappyBird() {
+        loadCustomization();
+
+        canvas.style.display = 'block';
+        document.getElementById('placeholder-text').style.display = 'none';
+        playButton.style.display = 'none';
+        gameRunning = true;
+        frameCount = 0;
+        birdY = 200;
+        birdVelocity = 0;
+        pipes = [];
+        score = 0;
+        sendResetToArduino();
+        updateGame();
+    }
+
+    // --- ARDUINO LOGIC ---
+
+    async function connectToArduino() {
+        if (!('serial' in navigator)) {
+            statusDiv.textContent = '⚠️ WEB SERIAL API UNAVAILABLE. Check browser settings.';
+            document.getElementById('start-button').style.display = 'block';
+            return;
+        }
+
+        try {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+
+            const encoder = new TextEncoderStream();
+            encoder.readable.pipeTo(port.writable);
+            writer = encoder.writable.getWriter();
+            const decoder = new TextDecoderStream();
+            const readableStream = port.readable.pipeThrough(decoder);
+            reader = readableStream.getReader();
+
+            statusDiv.textContent = '✅ ARDUINO PROTOCOL ACTIVE. START SIMULATION.';
+            document.getElementById('start-button').style.display = 'none';
+            playButton.style.display = 'block';
+            readArduinoData();
+        } catch (error) {
+            statusDiv.textContent = `[CONNECTION ERROR]: ${error.message}. RETRY.`;
+            document.getElementById('start-button').style.display = 'block';
+            playButton.style.display = 'none';
+        }
+    }
+
+    async function sendScoreToArduino(newScore) {
+        if (writer) await writer.write(`SCORE:${newScore}\n`);
+    }
+
+    async function sendJumpSoundToArduino() {
+        if (writer) await writer.write(`BUZZER_JUMP\n`);
+    }
+
+    async function sendFanfareToArduino() {
+        if (writer) await writer.write(`BUZZER_FANFARE\n`);
+    }
+
+    async function sendGameOverToArduino() {
+        if (writer) await writer.write(`BUZZER_LOSE\n`);
+    }
+
+    async function sendResetToArduino() {
+        if (writer) await writer.write(`RESET\n`);
+    }
+
+    async function readArduinoData() {
+        while (reader) {
+            try {
+                const { value, done } = await reader.read();
+                if (done) break;
+                if (value) processInput(value.trim());
+            } catch (e) {
+                console.error("Error reading from serial port:", e);
+                break;
+            }
+        }
+    }
+
+    function processInput(data) {
+        const parts = data.split(',');
+        if (parts.length < 3) return;
+        const [joyX, joyY] = parts.map(Number);
+
+        if (joyY < 400) jump();
+    }
+
+    // --- Добавляем обработчик нажатия клавиш ---
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.key === ' ') {
+            e.preventDefault();
+            jump();
+        }
+    });
+
+    document.getElementById('start-button').addEventListener('click', connectToArduino);
+    playButton.addEventListener('click', startFlappyBird);
+</script>
+</body>
+</html>

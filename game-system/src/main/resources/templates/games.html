@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Игры — 🕹️ GAME PROTOCOL ARRAY</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0d0d1a, #000000);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(45deg, rgba(255, 0, 255, 0.05), rgba(255, 0, 255, 0.05) 1px, transparent 2px, transparent 15px);
+            opacity: 0.3;
+            z-index: -1;
+            animation: backgroundFlow 40s linear infinite;
+        }
+
+        @keyframes backgroundFlow {
+            from { background-position: 0 0; }
+            to { background-position: 500px 500px; }
+        }
+
+        header {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            color: #00ffff; /* Циановый заголовок */
+            text-shadow: 0 0 15px #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .main-content {
+            display: flex;
+            padding: 40px;
+            gap: 30px;
+            max-width: 1500px; /* Немного увеличим для красоты */
+            margin: 0 auto;
+        }
+
+
+        .description-block {
+            flex: 1;
+            background: rgba(255, 0, 255, 0.05); /* Пурпурный акцент */
+            border-radius: 10px;
+            padding: 30px;
+            backdrop-filter: blur(8px);
+            border: 1px solid #ff00ff; /* Пурпурная обводка */
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
+            order: 2;
+        }
+
+        .description-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            text-align: center;
+            border-bottom: 2px dashed rgba(255, 0, 255, 0.5);
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .description-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #ccc;
+        }
+
+        .description-text p {
+            margin-bottom: 18px;
+        }
+
+        .description-text strong {
+            color: #00ffff;
+        }
+
+        /* --- СЕТКА ИГР СЛЕВА (2x2) --- */
+        .game-grid {
+            flex: 2.5; /* Игры занимают еще большую ширину */
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            order: 1;
+        }
+
+        /* --- КАРТОЧКИ ИГР (DATA BLOCKS) --- */
+        .card {
+            background: rgba(0, 255, 255, 0.05); /* Циановый акцент */
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 2px solid rgba(0, 255, 255, 0.5);
+        }
+
+        .card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
+            border-color: #ff00ff; /* Смена цвета при наведении */
+        }
+
+        .card img {
+            width: 100%;
+            height: 180px; /* Немного увеличим высоту для лучшего вида */
+            object-fit: cover;
+            border-bottom: 1px solid #00ffff;
+        }
+
+        .icons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .icon {
+            transition: transform 0.3s, filter 0.3s;
+        }
+
+        .icon:hover {
+            transform: scale(1.4);
+        }
+
+        .favorite.active {
+            color: #ff33cc;
+            text-shadow: 0 0 15px #ff33cc;
+            filter: drop-shadow(0 0 8px #ff33cc);
+        }
+
+        .star.active {
+            color: #ffff00;
+            text-shadow: 0 0 15px #ffff00;
+            filter: drop-shadow(0 0 8px #ffff00);
+        }
+
+        .card-content {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #00ffff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .genre {
+            font-size: 14px;
+            color: #a0a0a0;
+            margin-bottom: 15px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        button {
+            background: #ff00ff;
+            border: 1px solid #ff00ff;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 14px;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        button:hover {
+            background: #00ffff;
+            color: #0d0d1a;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px #00ffff;
+        }
+    </style>
+</head>
+<body>
+
+<header>🕹️ GAME PROTOCOL ARRAY</header>
+
+<div class="main-content">
+
+    <div class="game-grid" id="gameContainer">
+    </div>
+
+    <div class="description-block">
+        <div class="description-title">SYSTEM LOG: GAME SELECT</div>
+        <div class="description-text">
+            <p>Добро пожаловать в **CYBER HUB**. Здесь активирован **GAME PROTOCOL ARRAY**, предоставляющий вам доступ к классическим аркадным симуляциям.</p>
+            <p>Протоколы **TETRIS** и **SNAKE** — это вечные алгоритмы для проверки вашей логики и выносливости. **PULSE PONG** обеспечит соревновательный режим с интерфейсом Arduino, а **FLAPPY BIRD: CYBER-RUN** — тест на рефлексы.</p>
+            <p>Используйте **<span style="color:#ff33cc; text-shadow:0 0 8px #ff33cc;">❤️ LOVE</span>** и **<span style="color:#ffff00; text-shadow:0 0 8px #ffff00;">⭐ STAR</span>** для маркировки ваших предпочтений в Local Storage. Ваши избранные программы всегда будут готовы к запуску.</p>
+            <p>Выберите DATA BLOCK и нажмите **ACTIVATE** для немедленного запуска симуляции.</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Обновим данные, чтобы соответствовать кибер-стилю
+    const games = [
+        { name: "TETRIS", genre: "LOGIC // CLASSIC", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxc3m8FQBydONcXTiPP-njxM69ULSDS5hHpQ&s", desc: "PROTOCOL: Classic falling block simulation", file: "tetris" },
+        { name: "PULSE PONG", genre: "SPORT // ARCADIA", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIMKgPCOdFd5ufbJ9XVXYsMHfP-kNd7zjm8w&s", desc: "PROTOCOL: Arduino-enabled competitive pulse defense", file: "pingpong" },
+        { name: "SNAKE: DATA STREAM", genre: "ARCADE // CLASSIC", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHS2H3wqnCwrQNYkrLfbLuGOubM3aW9S7Qxw&s", desc: "PROTOCOL: Data path expansion and corruption avoidance", file: "snake" },
+        { name: "FLAPPY BIRD: CYBER-RUN", genre: "REFLEX // ARCADIA", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGxlThdUFQm-Do_ZdaonPY2YdBl0OK8X7LWA&s", desc: "PROTOCOL: Navigate obstacles, test reaction time", file: "flappybird" }
+    ];
+
+    const container = document.getElementById("gameContainer");
+    // Используем уникальные ключи для Local Storage, чтобы избежать конфликтов
+    const favoriteGames = JSON.parse(localStorage.getItem("cyberFavs")) || [];
+    const starredGames = JSON.parse(localStorage.getItem("cyberStars")) || [];
+
+    games.forEach(game => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const isFav = favoriteGames.includes(game.name);
+        const isStar = starredGames.includes(game.name);
+
+        card.innerHTML = `
+            <img src="${game.img}" alt="${game.name}">
+            <div class="icons">
+                <span class="icon favorite ${isFav ? "active" : ""}" title="LOVE Protocol">❤️</span>
+                <span class="icon star ${isStar ? "active" : ""}" title="STAR Protocol">⭐</span>
+            </div>
+            <div class="card-content">
+                <div class="card-title">${game.name}</div>
+                <div class="genre">${game.genre}</div>
+                <div class="buttons">
+                    <button onclick="alert('SYSTEM DATA:\\n${game.desc}')">DESCRIPTION</button>
+                    <button onclick="window.location.href='${game.file}'">ACTIVATE</button>
+                </div>
+            </div>
+        `;
+
+        const heart = card.querySelector(".favorite");
+        const star = card.querySelector(".star");
+
+        heart.addEventListener("click", () => toggleFavorite(game.name, heart));
+        star.addEventListener("click", () => toggleStar(game.name, star));
+
+        container.appendChild(card);
+    });
+
+    function toggleFavorite(gameName, element) {
+        let favorites = JSON.parse(localStorage.getItem("cyberFavs")) || [];
+        if (favorites.includes(gameName)) {
+            favorites = favorites.filter(g => g !== gameName);
+            element.classList.remove("active");
+        } else {
+            favorites.push(gameName);
+            element.classList.add("active");
+        }
+        localStorage.setItem("cyberFavs", JSON.stringify(favorites));
+    }
+
+    function toggleStar(gameName, element) {
+        let stars = JSON.parse(localStorage.getItem("cyberStars")) || [];
+        if (stars.includes(gameName)) {
+            stars = stars.filter(g => g !== gameName);
+            element.classList.remove("active");
+        } else {
+            stars.push(gameName);
+            element.classList.add("active");
+        }
+        localStorage.setItem("cyberStars", JSON.stringify(stars));
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тетрис - 👾 GRID BREAKER</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a, #200020); /* Глубокий темный фон */
+            color: #00ffff;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #ff00ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(255, 0, 255, 0.8);
+            letter-spacing: 3px;
+        }
+        #game-area {
+            width: 300px;
+            height: 600px;
+            background-color: #000000;
+            margin: 20px auto;
+            border: 3px solid #00ffff; /* Циановая рамка */
+            border-radius: 5px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+            position: relative;
+        }
+        #tetris-canvas {
+            background: transparent; /* Сетка будет нарисована в JS */
+        }
+
+        #start-button, #play-button {
+            background: #ff00ff; /* Пурпурная кнопка */
+            color: white;
+            padding: 15px 30px;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.7);
+        }
+        #start-button:hover, #play-button:hover {
+            background: #ff40ff;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 64, 255, 1);
+        }
+        #status {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            width: 280px;
+            text-shadow: 0 0 8px #00ffff;
+        }
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ff00ff;
+            font-size: 36px;
+            text-shadow: 0 0 15px #ff00ff;
+            font-family: 'Orbitron', sans-serif;
+        }
+        .restart-button {
+            background: #00ffff; /* Циановая кнопка */
+            color: #0d0d1a;
+            border: none;
+            padding: 12px 25px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+
+<h1>TETRIS // GRID BREAKER 👾</h1>
+
+<div id="game-area">
+    <canvas id="tetris-canvas" width="300" height="600" style="display:none;"></canvas>
+    <p id="placeholder-text">INITIATE ARDUINO PROTOCOL</p>
+    <div class="game-over" id="game-over">
+        <div>CORE OVERLOAD</div>
+        <div id="final-score" style="font-size: 24px; margin-top: 10px;"></div>
+        <button class="restart-button" id="restart-button">RE-SYNCHRONIZE</button>
+    </div>
+</div>
+
+<button id="start-button">CONNECT ARDUINO INTERFACE</button>
+<button id="play-button" style="display:none;">START SIMULATION</button>
+
+<div id="status">STATUS: AWAITING CONNECTION</div>
+
+<script>
+    // --- 🎶 АУДИО КОНТЕКСТ 🎶 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playMoveSound() {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+
+        // Отправляем команду на ардуино для воспроизведения звука движения
+        sendMoveSoundToArduino();
+    }
+
+    function playRotateSound() {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+
+        // Отправляем команду на ардуино для воспроизведения звука вращения
+        sendRotateSoundToArduino();
+    }
+
+    function playDropSound() {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+
+        // Отправляем команду на ардуино для воспроизведения звука падения
+        sendDropSoundToArduino();
+    }
+
+    function playLineClearSound(linesCleared) {
+        const notes = [500, 600, 700, 800];
+        const duration = 0.1;
+        let time = audioCtx.currentTime;
+
+        // Воспроизводим ноты в зависимости от количества очищенных линий
+        for (let i = 0; i < Math.min(linesCleared, 4); i++) {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.type = 'square';
+
+            gainNode.gain.setValueAtTime(0.02, time + i * duration * 1.2);
+            gainNode.gain.linearRampToValueAtTime(0.2, time + i * duration * 1.2 + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.001, time + (i * duration * 1.2) + duration);
+
+            osc.frequency.setValueAtTime(notes[i], time + i * duration * 1.2);
+            osc.start(time + i * duration * 1.2);
+            osc.stop(time + (i * duration * 1.2) + duration);
+        }
+
+        // Отправляем команду на ардуино для воспроизведения звука очистки линий
+        sendLineClearSoundToArduino(linesCleared);
+    }
+
+    function playLevelUpSound() {
+        const notes = [400, 600, 800, 1000];
+        const duration = 0.15;
+        let time = audioCtx.currentTime;
+
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.type = 'triangle';
+
+            gainNode.gain.setValueAtTime(0.02, time + index * duration * 1.1);
+            gainNode.gain.linearRampToValueAtTime(0.3, time + index * duration * 1.1 + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.001, time + (index * duration * 1.1) + duration);
+
+            osc.frequency.setValueAtTime(freq, time + index * duration * 1.1);
+            osc.start(time + index * duration * 1.1);
+            osc.stop(time + (index * duration * 1.1) + duration);
+        });
+
+        // Отправляем команду на ардуино для воспроизведения звука повышения уровня
+        sendLevelUpSoundToArduino();
+    }
+
+    function playGameOverSound() {
+        const notes = [300, 250, 200, 150, 100];
+        const duration = 0.25;
+        let time = audioCtx.currentTime;
+
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            osc.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+
+            osc.frequency.setValueAtTime(freq, time + index * duration * 1.5);
+            osc.start(time + index * duration * 1.5);
+            osc.stop(time + (index * duration * 1.5) + duration);
+        });
+
+        // Отправляем команду на ардуино для воспроизведения звука проигрыша
+        sendGameOverToArduino();
+    }
+    // ------------------------------------
+
+    let port, reader, writer;
+    let gameRunning = false;
+    const statusDiv = document.getElementById('status');
+    const canvas = document.getElementById('tetris-canvas');
+    const ctx = canvas.getContext('2d');
+    const playButton = document.getElementById('play-button');
+    const gameOverScreen = document.getElementById('game-over');
+    const finalScoreElement = document.getElementById('final-score');
+
+    // Константы игры
+    const COLS = 10;
+    const ROWS = 20;
+    const BLOCK_SIZE = 30;
+    // Цвета Tetrominoes (Неоновые/Яркие)
+    const COLORS = [
+        null,
+        '#FF33CC', // I (Пурпурный)
+        '#33CCFF', // J (Голубой)
+        '#CCFF33', // L (Лаймовый)
+        '#FFCC33', // O (Оранжевый)
+        '#FF6666', // S (Красный)
+        '#CC33FF', // T (Фиолетовый)
+        '#66FF66'  // Z (Зеленый)
+    ];
+
+    // Фигуры Тетриса
+    const PIECES = {
+        I: [
+            [0, 0, 0, 0],
+            [1, 1, 1, 1],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]
+        ],
+        J: [
+            [2, 0, 0],
+            [2, 2, 2],
+            [0, 0, 0]
+        ],
+        L: [
+            [0, 0, 3],
+            [3, 3, 3],
+            [0, 0, 0]
+        ],
+        O: [
+            [4, 4],
+            [4, 4]
+        ],
+        S: [
+            [0, 5, 5],
+            [5, 5, 0],
+            [0, 0, 0]
+        ],
+        T: [
+            [0, 6, 0],
+            [6, 6, 6],
+            [0, 0, 0]
+        ],
+        Z: [
+            [7, 7, 0],
+            [0, 7, 7],
+            [0, 0, 0]
+        ]
+    };
+
+    let board = createBoard();
+    let piece = null;
+    let nextPiece = null;
+    let dropCounter = 0;
+    let dropTime = 500;
+    let lastTime = 0;
+    let score = 0;
+    let lines = 0;
+    let level = 1;
+    let gameStartTime = 0;
+    let currentTime = 0;
+    let lastLevel = 1;
+
+    function createBoard() {
+        return Array.from({length: ROWS}, () => Array(COLS).fill(0));
+    }
+
+    function createPiece() {
+        const pieces = 'IJLOSTZ';
+        const type = pieces[Math.floor(Math.random() * pieces.length)];
+        return {
+            pos: {x: Math.floor(COLS / 2) - 1, y: 0},
+            matrix: JSON.parse(JSON.stringify(PIECES[type])),
+            type: type
+        };
+    }
+
+    function draw() {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // --- Рисуем голографическую сетку ---
+        ctx.strokeStyle = '#00ffff'; // Циановая сетка
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.2; // Полупрозрачность
+        for (let y = 0; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            }
+        }
+        ctx.globalAlpha = 1.0; // Сброс прозрачности
+
+        // Рисуем блоки на поле
+        for (let y = 0; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                if (board[y][x]) {
+                    drawBlock(x, y, board[y][x]);
+                }
+            }
+        }
+
+        // Рисуем текущую фигуру
+        if (piece) {
+            drawPiece(piece);
+        }
+
+        // --- Стильный вывод информации ---
+        ctx.font = "bold 16px Orbitron";
+        ctx.textAlign = "left";
+        ctx.shadowColor = "#ff00ff";
+        ctx.shadowBlur = 5;
+
+        // Время
+        const minutes = Math.floor(currentTime / 60000);
+        const seconds = Math.floor((currentTime % 60000) / 1000);
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        ctx.fillStyle = "#ff00ff";
+        ctx.fillText("TIME: " + timeString, 10, 25);
+        ctx.fillText("SCORE: " + score, 10, 50);
+        ctx.fillText("LINES: " + lines, 10, 75);
+        ctx.fillText("LEVEL: " + level, 10, 100);
+
+        ctx.shadowBlur = 0; // Сброс тени
+    }
+
+    // Вспомогательная функция для рисования одного блока с неоновым эффектом
+    function drawBlock(x, y, value) {
+        const color = COLORS[value];
+
+        // --- Неоновое свечение ---
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 15;
+
+        ctx.fillStyle = color;
+        ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+
+        // Внутренняя рамка для детализации (можно убрать для ультра-минимализма)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x * BLOCK_SIZE + 1, y * BLOCK_SIZE + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+
+        ctx.shadowBlur = 0; // Сброс
+    }
+
+    function drawPiece(p) {
+        p.matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) {
+                    drawBlock(p.pos.x + x, p.pos.y + y, value);
+                }
+            });
+        });
+    }
+
+    function collide(board, piece) {
+        const [m, o] = [piece.matrix, piece.pos];
+        for (let y = 0; y < m.length; ++y) {
+            for (let x = 0; x < m[y].length; ++x) {
+                if (m[y][x] !== 0 &&
+                   (board[y + o.y] === undefined ||
+                    board[y + o.y][x + o.x] === undefined ||
+                    board[y + o.y][x + o.x] !== 0)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function merge(board, piece) {
+        piece.matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) {
+                    board[y + piece.pos.y][x + piece.pos.x] = value;
+                }
+            });
+        });
+    }
+
+    function rotate(matrix) {
+        const N = matrix.length;
+        for (let i = 0; i < N; i++) {
+            for (let j = i; j < N; j++) {
+                [matrix[i][j], matrix[j][i]] = [matrix[j][i], matrix[i][j]];
+            }
+        }
+        matrix.forEach(row => row.reverse());
+    }
+
+    function moveLeft() {
+        if (!piece || !gameRunning) return;
+        piece.pos.x--;
+        if (collide(board, piece)) {
+            piece.pos.x++;
+        } else {
+            playMoveSound();
+        }
+    }
+
+    function moveRight() {
+        if (!piece || !gameRunning) return;
+        piece.pos.x++;
+        if (collide(board, piece)) {
+            piece.pos.x--;
+        } else {
+            playMoveSound();
+        }
+    }
+
+    function moveDown() {
+        if (!piece || !gameRunning) return;
+        piece.pos.y++;
+        if (collide(board, piece)) {
+            piece.pos.y--;
+            merge(board, piece);
+            playDropSound();
+            pieceReset();
+            clearLines();
+        }
+        dropCounter = 0;
+    }
+
+    function rotatePiece() {
+        if (!piece || !gameRunning) return;
+        const pos = piece.pos.x;
+        let offset = 1;
+        const original = JSON.parse(JSON.stringify(piece.matrix));
+        rotate(piece.matrix);
+
+        while (collide(board, piece)) {
+            piece.pos.x += offset;
+            offset = -(offset + (offset > 0 ? 1 : -1));
+            if (offset > piece.matrix[0].length) {
+                piece.matrix = original;
+                piece.pos.x = pos;
+                return;
+            }
+        }
+        playRotateSound();
+    }
+
+    function hardDrop() {
+        if (!piece || !gameRunning) return;
+        while (!collide(board, piece)) {
+            piece.pos.y++;
+        }
+        piece.pos.y--;
+        merge(board, piece);
+        playDropSound();
+        pieceReset();
+        clearLines();
+    }
+
+    function pieceReset() {
+        piece = nextPiece;
+        nextPiece = createPiece();
+
+        if (collide(board, piece)) {
+            gameOver();
+        }
+    }
+
+    function clearLines() {
+        let linesCleared = 0;
+
+        outer: for (let y = ROWS - 1; y >= 0; --y) {
+            for (let x = 0; x < COLS; ++x) {
+                if (board[y][x] === 0) {
+                    continue outer;
+                }
+            }
+
+            const row = board.splice(y, 1)[0].fill(0);
+            board.unshift(row);
+            ++y;
+            linesCleared++;
+        }
+
+        if (linesCleared > 0) {
+            const points = [0, 100, 300, 500, 800][linesCleared] * level;
+            score += points;
+            lines += linesCleared;
+
+            // Проверяем повышение уровня
+            const newLevel = Math.floor(lines / 10) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                playLevelUpSound();
+            } else {
+                level = newLevel;
+            }
+
+            dropTime = Math.max(100, 500 - (level - 1) * 50);
+
+            playLineClearSound(linesCleared);
+
+            // Обновляем очки в профиле пользователя
+            let currentPoints = parseInt(localStorage.getItem("userPoints") || '0');
+            localStorage.setItem("userPoints", currentPoints + linesCleared);
+
+            sendToArduinoDisplay();
+        }
+    }
+
+    function gameOver() {
+        gameRunning = false;
+        finalScoreElement.textContent = "FINAL SCORE: " + score;
+        gameOverScreen.style.display = 'flex';
+        playGameOverSound();
+        sendGameOverToArduino();
+    }
+
+    function startTetris() {
+        canvas.style.display = 'block';
+        document.getElementById('placeholder-text').style.display = 'none';
+        playButton.style.display = 'none';
+
+        board = createBoard();
+        piece = createPiece();
+        nextPiece = createPiece();
+        score = 0;
+        lines = 0;
+        level = 1;
+        lastLevel = 1;
+        dropTime = 500;
+        gameRunning = true;
+        gameOverScreen.style.display = 'none';
+        gameStartTime = Date.now();
+        currentTime = 0;
+
+        sendReset();
+        update();
+    }
+
+    function update(time = 0) {
+        if (!gameRunning) return;
+
+        const deltaTime = time - lastTime;
+        lastTime = time;
+
+        dropCounter += deltaTime;
+        currentTime = Date.now() - gameStartTime;
+
+        if (dropCounter > dropTime) {
+            moveDown();
+        }
+
+        // Обновляем данные на Arduino каждые 500мс
+        if (time % 500 < 16) {
+            sendToArduinoDisplay();
+        }
+
+        draw();
+        requestAnimationFrame(update);
+    }
+
+    // --- Arduino Logic ---
+
+    async function connectToArduino() {
+        if (!('serial' in navigator)) {
+            statusDiv.textContent = '⚠️ WEB SERIAL API UNAVAILABLE.';
+            return;
+        }
+        try {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            const encoder = new TextEncoderStream();
+            encoder.readable.pipeTo(port.writable);
+            writer = encoder.writable.getWriter();
+
+            const decoder = new TextDecoderStream();
+            const readableStream = port.readable.pipeThrough(decoder);
+            reader = readableStream.getReader();
+
+            statusDiv.textContent = '✅ ARDUINO PROTOCOL ACTIVE';
+            document.getElementById('start-button').style.display = 'none';
+            playButton.style.display = 'block';
+            readArduinoData();
+        } catch (error) {
+            statusDiv.textContent = `[CONNECTION ERROR]: ${error.message}`;
+        }
+    }
+
+    async function sendToArduinoDisplay() {
+        if (!writer) return;
+
+        const minutes = Math.floor(currentTime / 60000);
+        const seconds = Math.floor((currentTime % 60000) / 1000);
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        // Формат: TIME:MM:SS,SCORE:XXXX,LINES:XX,LEVEL:X
+        const displayData = `TIME:${timeString},SCORE:${score},LINES:${lines},LEVEL:${level}\n`;
+        await writer.write(displayData);
+    }
+
+    async function sendMoveSoundToArduino() {
+        if (writer) await writer.write(`BUZZER_MOVE\n`);
+    }
+
+    async function sendRotateSoundToArduino() {
+        if (writer) await writer.write(`BUZZER_ROTATE\n`);
+    }
+
+    async function sendDropSoundToArduino() {
+        if (writer) await writer.write(`BUZZER_DROP\n`);
+    }
+
+    async function sendLineClearSoundToArduino(linesCleared) {
+        if (writer) await writer.write(`BUZZER_LINE:${linesCleared}\n`);
+    }
+
+    async function sendLevelUpSoundToArduino() {
+        if (writer) await writer.write(`BUZZER_LEVEL\n`);
+    }
+
+    async function sendGameOverToArduino() {
+        if (writer) await writer.write(`BUZZER_LOSE\n`);
+    }
+
+    async function sendReset() {
+        if (writer) await writer.write(`RESET\n`);
+    }
+
+    async function readArduinoData() {
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            if (value) processInput(value.trim());
+        }
+    }
+
+    function processInput(data) {
+        const parts = data.split(',');
+        if (parts.length < 3) return;
+        const [joyX, joyY, button] = parts.map(Number);
+
+        const LOW = 400, HIGH = 600;
+
+        if (joyX < LOW) moveLeft();
+        if (joyX > HIGH) moveRight();
+        if (joyY < LOW) moveDown();
+        if (button === 1) rotatePiece();
+
+        statusDiv.textContent = `JOYSTICK INPUT: X=${joyX}, Y=${joyY}, BTN=${button}`;
+    }
+
+    // Управление с клавиатуры
+    document.addEventListener('keydown', event => {
+        if (!gameRunning) return;
+
+        switch(event.keyCode) {
+            case 37: moveLeft(); break;
+            case 39: moveRight(); break;
+            case 40: moveDown(); break;
+            case 38: rotatePiece(); break;
+            case 32: hardDrop(); break;
+        }
+    });
+
+    document.getElementById('start-button').addEventListener('click', connectToArduino);
+    playButton.addEventListener('click', startTetris);
+    document.getElementById('restart-button').addEventListener('click', startTetris);
+</script>
+</body>
+</html>

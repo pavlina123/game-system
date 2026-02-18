@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>🌐 CYBER HUB // Game System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            /* Глубокий кибер-градиент */
+            background: linear-gradient(135deg, #0d0d1a, #200020, #000000);
+            height: 100vh;
+            color: #00ffff; /* Циановый основной цвет */
+            overflow: hidden;
+        }
+
+        /* Эффект мерцающего фона */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(45deg, rgba(0, 255, 255, 0.05), rgba(0, 255, 255, 0.05) 1px, transparent 2px, transparent 10px);
+            opacity: 0.6;
+            animation: backgroundFlow 30s linear infinite;
+        }
+
+        @keyframes backgroundFlow {
+            from { background-position: 0 0; }
+            to { background-position: 500px 500px; }
+        }
+
+        header {
+            width: 100%;
+            /* Увеличиваем padding справа для соответствия скриншоту */
+            padding: 15px 30px;
+            display: flex;
+            /* Выравнивание по правому краю */
+            justify-content: flex-end;
+            align-items: center;
+            background: rgba(0,0,0,0.6);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            /* Убираем лишний padding-left, чтобы ссылки прижимались к правому краю */
+            box-sizing: border-box;
+        }
+
+        header a {
+            text-decoration: none;
+            color: #ff00ff; /* Пурпурный цвет ссылок */
+            /* Уменьшаем отступ слева, чтобы ссылки были ближе друг к другу, но оставляем margin-left */
+            margin-left: 15px;
+            font-weight: bold;
+            padding: 8px 20px;
+            border-radius: 5px;
+            background: rgba(255,0,255,0.1);
+            /* Добавляем неоновую обводку, как на скриншоте */
+            border: 2px solid #ff00ff;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px #ff00ff; /* Усиливаем свечение */
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5); /* Дополнительная тень */
+        }
+
+        header a:hover {
+            background: #ff00ff;
+            color: #0d0d1a;
+            box-shadow: 0 0 25px #ff00ff;
+            transform: scale(1.05);
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            padding-top: 80px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff, 0 0 40px rgba(0, 255, 255, 0.6);
+            animation: fadeInDown 1s ease-out;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        p {
+            font-size: 1.4rem;
+            margin-bottom: 40px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            animation: fadeIn 1.5s ease-out;
+            letter-spacing: 1px;
+        }
+
+        .btn {
+            background: #00ffff;
+            color: #0d0d1a;
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .btn:hover {
+            background: #ff00ff;
+            color: white;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 0 30px #ff00ff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="profile">SYSTEM PROFILE</a>
+    <a href="register">ACCESS NODE</a>
+</header>
+
+<main>
+    <h1>CYBER HUB ONLINE</h1>
+    <p>INITIATE GAME PROTOCOL. ACCESS GRANTED.</p>
+    <a href="/games"><button class="btn">GO TO GAME SELECTION</button></a>
+</main>
+
+</body>
+</html>
