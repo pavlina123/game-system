@@ -2,1025 +2,158 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Профиль — 🌌 CYBER-NET PROFILE 💎</title>
+    <title>Профиль игрока</title>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
         body {
-            font-family: 'Orbitron', sans-serif;
-            background: #0d0d1a;
-            color: #00e6e6;
+            background: #0f0f1a;
+            color: white;
+            font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 40px 20px;
-            box-sizing: border-box;
+            justify-content: center;
+            padding: 40px;
         }
 
-        /* Кастомный скроллбар */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #0d0d1a;
-            border: 1px solid #00e6e6;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(45deg, #ff00ff, #00e6e6);
-            border-radius: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(45deg, #00e6e6, #ff00ff);
-        }
-
-        .profile-container {
-            display: flex;
-            align-items: flex-start;
-            background: rgba(17, 17, 34, 0.85);
-            border: 2px solid #00e6e6;
-            border-radius: 20px;
-            padding: 50px;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 0 50px rgba(0, 230, 230, 0.5), inset 0 0 20px rgba(0, 230, 230, 0.3);
-            width: 1000px;
-            min-height: 600px;
-            opacity: 0;
-            transform: scale(0.9);
-            transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            position: relative;
-            z-index: 10;
-            margin: 20px auto;
-        }
-
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
-        }
-
-        .profile-container:hover {
-            box-shadow: 0 0 60px rgba(0, 255, 255, 0.7), inset 0 0 30px rgba(0, 255, 255, 0.5);
-            animation: glitch 0.5s infinite linear alternate;
-        }
-
-        .glow {
-            position: absolute;
+        .profile-card {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 15px;
             width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(255, 0, 255, 0.2), transparent);
-            filter: blur(120px);
-            z-index: 0;
-            animation: pulse 5s infinite alternate;
-        }
-        .glow1 { top: -100px; left: -100px; }
-        .glow2 { bottom: -100px; right: -100px; background: radial-gradient(circle, rgba(0, 255, 255, 0.2), transparent); }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.6; }
-            100% { transform: scale(1.1); opacity: 0.9; }
+            box-shadow: 0 0 20px #00f2ff55;
         }
 
-        .left-panel {
+        h2 {
             text-align: center;
-            width: 30%;
-            z-index: 2;
-            position: sticky;
-            top: 50px;
+            color: #00f2ff;
         }
 
-        #avatar {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            background: #111;
-            border: 4px solid #ff00ff;
-            box-shadow: 0 0 40px rgba(255, 0, 255, 0.8), 0 0 10px #ff00ff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 60px;
-            font-weight: bold;
-            color: #fff;
-            margin: 0 auto 25px auto;
-            position: relative;
-        }
-
-        #avatar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: repeating-linear-gradient(
-                45deg,
-                rgba(0, 255, 255, 0.2),
-                rgba(0, 255, 255, 0.2) 2px,
-                transparent 2px,
-                transparent 4px
-            );
-            border-radius: 50%;
-            mix-blend-mode: overlay;
-            animation: scan 3s infinite linear;
-        }
-        @keyframes scan {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
-        }
-
-        .username-display {
-            font-size: 32px;
-            color: #fff;
-            text-shadow: 0 0 10px #ff00ff;
-            margin-bottom: 5px;
-        }
-
-        .email-display {
-            font-size: 14px;
-            color: #00e6e6;
-            opacity: 0.7;
+        .avatar-section {
+            text-align: center;
             margin-bottom: 20px;
         }
 
-        .right-panel {
-            width: 70%;
-            padding-left: 50px;
-            z-index: 2;
-        }
-
-        h3 {
-            font-size: 22px;
-            margin: 0 0 15px 0;
-            color: #ff00ff;
-            border-bottom: 2px solid #00e6e6;
-            padding-bottom: 8px;
-        }
-
-        /* НОВЫЕ СТИЛИ ДЛЯ ОЧКОВ И ПРОГРЕССА */
-        .games-score-section {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid #00e6e6;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 0 15px rgba(0, 230, 230, 0.3);
-        }
-
-        .games-score-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .games-score-header h4 {
-            margin: 0;
-            color: #fff;
-            font-size: 20px;
-            text-shadow: 0 0 5px #00e6e6;
-        }
-
-        .total-score {
-            color: #ff00ff;
-            text-shadow: 0 0 10px #ff00ff;
-            font-size: 20px;
-            background: rgba(0,0,0,0.5);
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 1px solid #ff00ff;
-        }
-
-        .game-score-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            transition: all 0.3s;
-            border: 1px solid rgba(0,230,230,0.2);
-        }
-
-        .game-score-item:hover {
-            background: rgba(0, 230, 230, 0.1);
-            transform: translateX(5px);
-            border-color: #ff00ff;
-        }
-
-        .game-icon {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 30px;
-            margin-right: 20px;
-            background: rgba(0,0,0,0.5);
+        .avatar-section img {
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            border: 1px solid #00e6e6;
+            object-fit: cover;
+            border: 3px solid #00f2ff;
         }
 
-        .game-info {
-            flex: 1;
+        input[type="file"] {
+            margin-top: 10px;
         }
 
-        .game-name {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .game-name span:first-child {
-            color: #00e6e6;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .game-name span:last-child {
-            color: #ff00ff;
-            font-weight: bold;
-            font-size: 18px;
-            text-shadow: 0 0 5px #ff00ff;
+        .stat {
+            margin: 10px 0;
+            padding: 8px;
+            background: #16213e;
+            border-radius: 8px;
         }
 
         .progress-bar {
             width: 100%;
-            height: 12px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 6px;
-            border: 1px solid #00e6e6;
+            background: #333;
+            border-radius: 10px;
             overflow: hidden;
-            position: relative;
+            margin-top: 5px;
         }
 
-        .progress-fill {
-            height: 100%;
+        .progress {
+            height: 15px;
+            background: #00f2ff;
             width: 0%;
-            background: linear-gradient(90deg, #00e6e6, #ff00ff);
-            border-radius: 6px;
-            animation: pulse-width 2s infinite alternate;
-            position: relative;
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg,
-                transparent,
-                rgba(255, 255, 255, 0.3),
-                transparent
-            );
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        @keyframes pulse-width {
-            0% { opacity: 0.8; }
-            100% { opacity: 1; }
-        }
-
-        .level-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            background: rgba(255, 0, 255, 0.2);
-            border: 1px solid #ff00ff;
-            border-radius: 15px;
-            font-size: 12px;
-            color: #fff;
-            margin-left: 10px;
-            box-shadow: 0 0 5px #ff00ff;
-        }
-
-        .reset-score-btn {
-            background: none;
-            border: 1px solid #ff00ff;
-            color: #ff00ff;
-            padding: 5px 12px;
-            border-radius: 5px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-left: 10px;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .reset-score-btn:hover {
-            background: #ff00ff;
-            color: #0d0d1a;
-            box-shadow: 0 0 10px #ff00ff;
-        }
-
-        /* СТИЛИ ДЛЯ ФОРМЫ СМЕНЫ ПАРОЛЯ */
-        .password-form {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid #00e6e6;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 0 15px rgba(0, 230, 230, 0.3);
-        }
-
-        .password-form h4 {
-            margin: 0 0 20px 0;
-            color: #fff;
-            font-size: 18px;
-            text-shadow: 0 0 5px #00e6e6;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #00e6e6;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 95%;
-            padding: 12px;
-            border: 2px solid #00e6e6;
-            border-radius: 5px;
-            background: rgba(0, 0, 0, 0.5);
-            color: #00e6e6;
-            font-family: 'Orbitron', sans-serif;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .form-group input:focus {
-            border-color: #ff00ff;
-            box-shadow: 0 0 15px #ff00ff;
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        .btn-change-password {
-            padding: 12px 25px;
-            background: #ff00ff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-family: 'Orbitron', sans-serif;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
-        }
-
-        .btn-change-password:hover {
-            background: #00ffff;
-            color: #0d0d1a;
-            box-shadow: 0 0 25px #00ffff;
-        }
-
-        .message {
-            margin-top: 15px;
-            font-size: 12px;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-        }
-
-        .success {
-            background: rgba(0, 255, 0, 0.2);
-            color: #00ff00;
-            border: 1px solid #00ff00;
-        }
-
-        .error {
-            background: rgba(255, 0, 0, 0.2);
-            color: #ff6666;
-            border: 1px solid #ff6666;
-        }
-
-        .game-settings-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
-            margin-bottom: 20px;
-        }
-
-        .setting-group {
-            padding: 20px;
-            border: 1px solid #00e6e6;
-            border-radius: 10px;
-            background: rgba(0, 0, 0, 0.4);
-            box-shadow: 0 0 15px rgba(0, 230, 230, 0.3);
-        }
-
-        .setting-group h4 {
-            margin: 0 0 15px 0;
-            color: #fff;
-            font-size: 18px;
-            text-shadow: 0 0 5px #00e6e6;
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .setting-item label {
-            font-size: 14px;
-            color: #00e6e6;
-        }
-
-        .setting-item select {
-            padding: 8px 12px;
-            border-radius: 5px;
-            border: 1px solid #ff00ff;
-            background: #0d0d1a;
-            color: #fff;
-            font-size: 14px;
-            appearance: none;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 25px;
-            margin-top: 30px;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border-radius: 5px;
-            border: none;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-
-        .btn-home {
-            background: #00e6e6;
-            color: #0d0d1a;
-            box-shadow: 0 0 20px rgba(0, 230, 230, 0.7);
-        }
-
-        .btn-logout {
-            background: #ff00ff;
-            color: #fff;
-            box-shadow: 0 0 20px rgba(255, 0, 255, 0.7);
-        }
-
-        .btn:hover {
-            transform: scale(1.05);
-            opacity: 0.9;
-            box-shadow: 0 0 30px currentColor;
-        }
-
-        .profile-container.show {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .unauthorized-message {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 28px;
-            color: #ff00ff;
-            text-shadow: 0 0 15px #ff00ff;
-            z-index: 3;
-            display: none;
-            animation: glitch 0.3s infinite linear alternate;
-            background: rgba(13, 13, 26, 0.9);
-            padding: 40px;
-            border: 2px solid #ff00ff;
-            border-radius: 20px;
-            box-shadow: 0 0 50px rgba(255,0,255,0.5);
-        }
-
-        /* Дополнительные стили для скролла */
-        .scroll-indicator {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #ff00ff, #00e6e6);
-            width: 0%;
-            z-index: 1000;
-            box-shadow: 0 0 20px #ff00ff;
-        }
-
-        .neon-particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        /* Адаптивность */
-        @media (max-width: 1100px) {
-            .profile-container {
-                width: 95%;
-                padding: 30px;
-            }
-        }
-
-        @media (max-width: 900px) {
-            .profile-container {
-                flex-direction: column;
-            }
-
-            .left-panel {
-                width: 100%;
-                position: static;
-                margin-bottom: 30px;
-            }
-
-            .right-panel {
-                width: 100%;
-                padding-left: 0;
-            }
-
-            .game-settings-grid {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
+
 <body>
-<!-- Индикатор прокрутки -->
-<div class="scroll-indicator" id="scrollIndicator"></div>
 
-<div class="unauthorized-message" id="unauthorizedMessage">
-    [ERROR] ACCESS DENIED 🔒. REDIRECTING...
-</div>
+<div class="profile-card">
 
-<div class="profile-container" id="profile" style="display:none;">
-    <div class="glow glow1"></div>
-    <div class="glow glow2"></div>
+    <h2>Профиль игрока</h2>
 
-    <div class="left-panel">
-        <div id="avatar">?</div>
-        <div class="username-display" id="fullName">[USER_NAME_TAG]</div>
-        <div class="email-display" id="email">STATUS: OFFLINE</div>
+    <div class="avatar-section">
+        <img id="userAvatar" src="https://via.placeholder.com/120" alt="Avatar">
+        <br>
+        <input type="file" id="avatarInput">
+    </div>
 
-        <div class="btn-group">
-            <button class="btn btn-home" onclick="goHome()">🏠 HOME BASE</button>
-            <button class="btn btn-logout" onclick="logout()">🚪 LOGOUT</button>
+    <div class="stat">Имя: <span id="username"></span></div>
+    <div class="stat">Дата регистрации: <span id="regDate"></span></div>
+    <div class="stat">Сыграно игр: <span id="gamesPlayed"></span></div>
+    <div class="stat">XP: <span id="xp"></span></div>
+
+    <div class="stat">
+        Уровень: <span id="level"></span>
+        <div class="progress-bar">
+            <div class="progress" id="progressBar"></div>
         </div>
     </div>
 
-    <div class="right-panel">
-        <!-- НОВЫЙ БЛОК С ОЧКАМИ И ПРОГРЕССОМ ИГР -->
-        <div class="games-score-section">
-            <div class="games-score-header">
-                <h4>🎮 ИГРОВАЯ СТАТИСТИКА</h4>
-                <div class="total-score" id="totalScore">TOTAL: 0 XP</div>
-            </div>
+    <div class="stat">Достижение: <span id="achievements"></span></div>
+    <div class="stat" id="status"></div>
 
-            <!-- Flappy Bird -->
-            <div class="game-score-item">
-                <div class="game-icon">🐥</div>
-                <div class="game-info">
-                    <div class="game-name">
-                        <span>FLAPPY BIRD</span>
-                        <span id="flappyScore">0 XP</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="flappyProgress" style="width: 0%;"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-                        <span class="level-badge" id="flappyLevel">LVL 1</span>
-                        <div>
-                            <button class="reset-score-btn" onclick="addTestPoints('flappyBird', 100)">+100 XP</button>
-                            <button class="reset-score-btn" onclick="addTestPoints('flappyBird', 500)">+500 XP</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Snake -->
-            <div class="game-score-item">
-                <div class="game-icon">🐍</div>
-                <div class="game-info">
-                    <div class="game-name">
-                        <span>SNAKE CORE</span>
-                        <span id="snakeScore">0 XP</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="snakeProgress" style="width: 0%;"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-                        <span class="level-badge" id="snakeLevel">LVL 1</span>
-                        <div>
-                            <button class="reset-score-btn" onclick="addTestPoints('snake', 150)">+150 XP</button>
-                            <button class="reset-score-btn" onclick="addTestPoints('snake', 600)">+600 XP</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Общий прогресс -->
-            <div style="margin-top: 20px; padding: 15px; border-top: 2px solid rgba(0,230,230,0.3);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="color: #fff; font-size: 16px;">ОБЩИЙ ПРОГРЕСС</span>
-                    <span style="color: #00e6e6; font-size: 18px;" id="overallLevel">УРОВЕНЬ 1</span>
-                </div>
-                <div class="progress-bar" style="height: 15px;">
-                    <div class="progress-fill" id="overallProgress" style="width: 0%;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-                    <span style="color: #ff00ff; font-size: 12px;" id="nextLevelProgress">0/1000 XP</span>
-                    <button class="reset-score-btn" onclick="resetGameScores()" style="border-color: #00e6e6; color: #00e6e6;">СБРОС</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ФОРМА СМЕНЫ ПАРОЛЯ -->
-        <div class="password-form">
-            <h4>🔐 PASSWORD SECURITY PROTOCOL</h4>
-            <div class="form-group">
-                <label for="newPassword">NEW ENCRYPTION KEY:</label>
-                <input type="password" id="newPassword" placeholder="ENTER NEW PASSWORD">
-            </div>
-            <div class="form-group">
-                <label for="confirmPassword">CONFIRM ENCRYPTION KEY:</label>
-                <input type="password" id="confirmPassword" placeholder="REPEAT NEW PASSWORD">
-            </div>
-            <button class="btn-change-password" onclick="changePassword()">UPDATE SECURITY PROTOCOL</button>
-            <div id="passwordMessage" class="message"></div>
-        </div>
-
-        <div class="section">
-            <h3>⚙️ GAME CUSTOMIZATION PROTOCOLS</h3>
-            <div class="game-settings-grid">
-                <div class="setting-group">
-                    <h4>// FLAPPY BIRD // 🐥</h4>
-                    <div class="setting-item">
-                        <label for="fbColor">RENDER COLOR:</label>
-                        <select id="fbColor" onchange="saveFlappyBirdSettings()">
-                            <option value="#ff00ff">MAGENTA (Default)</option>
-                            <option value="#00ffff">CYAN</option>
-                            <option value="#76ff03">LIME</option>
-                            <option value="#ffff00">YELLOW</option>
-                        </select>
-                    </div>
-                    <div class="setting-item">
-                        <label for="fbShape">MODEL TYPE:</label>
-                        <select id="fbShape" onchange="saveFlappyBirdSettings()">
-                            <option value="diamond">DIAMOND (Default)</option>
-                            <option value="circle">SPHERE</option>
-                            <option value="square">CUBE</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="setting-group">
-                    <h4>// SNAKE CORE // 🐍</h4>
-                    <div class="setting-item">
-                        <label for="snakeHeadColor">HEAD NODE:</label>
-                        <select id="snakeHeadColor" onchange="saveSnakeSettings()">
-                            <option value="#ff00ff">MAGENTA (Default)</option>
-                            <option value="#00ffff">CYAN</option>
-                            <option value="#76ff03">LIME</option>
-                        </select>
-                    </div>
-                    <div class="setting-item">
-                        <label for="snakeBodyColor">BODY TRAIL:</label>
-                        <select id="snakeBodyColor" onchange="saveSnakeSettings()">
-                            <option value="#800080">PURPLE</option>
-                            <option value="#008080">TEAL</option>
-                            <option value="#32cd32">LIME GREEN</option>
-                        </select>
-                    </div>
-                    <div class="setting-item">
-                        <label for="foodColor">DATA NODE (FOOD):</label>
-                        <select id="foodColor" onchange="saveSnakeSettings()">
-                            <option value="#ff0000">RED</option>
-                            <option value="#ffff00">GOLD</option>
-                            <option value="#00ff00">GREEN</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Дополнительный контент для демонстрации прокрутки -->
-        <div style="margin-top: 30px; padding: 20px; border: 1px dashed #00e6e6; border-radius: 10px; text-align: center; opacity: 0.8;">
-            <span style="color: #00e6e6;">▼ ПРОКРУТИ ВНИЗ ДЛЯ ДОПОЛНИТЕЛЬНЫХ ПРОТОКОЛОВ ▼</span>
-        </div>
-
-        <div style="margin-top: 30px; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 10px;">
-            <h3 style="border-bottom-color: #ff00ff;">📊 ДОСТИЖЕНИЯ</h3>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;">
-                <div style="padding: 15px; border: 1px solid #00e6e6; border-radius: 8px; text-align: center;">
-                    <span style="font-size: 30px;">🏆</span>
-                    <p style="margin: 10px 0 0 0; color: #fff;">НОВИЧОК</p>
-                    <small style="color: #00e6e6;">0/1000 XP</small>
-                </div>
-                <div style="padding: 15px; border: 1px solid #00e6e6; border-radius: 8px; text-align: center;">
-                    <span style="font-size: 30px;">🎯</span>
-                    <p style="margin: 10px 0 0 0; color: #fff;">МЕТКИЙ</p>
-                    <small style="color: #00e6e6;">1000/2000 XP</small>
-                </div>
-                <div style="padding: 15px; border: 1px solid #00e6e6; border-radius: 8px; text-align: center;">
-                    <span style="font-size: 30px;">💎</span>
-                    <p style="margin: 10px 0 0 0; color: #fff;">ВЕТЕРАН</p>
-                    <small style="color: #00e6e6;">2000/3000 XP</small>
-                </div>
-                <div style="padding: 15px; border: 1px solid #00e6e6; border-radius: 8px; text-align: center;">
-                    <span style="font-size: 30px;">👑</span>
-                    <p style="margin: 10px 0 0 0; color: #fff;">ЛЕГЕНДА</p>
-                    <small style="color: #00e6e6;">3000+ XP</small>
-                </div>
-            </div>
-        </div>
-
-        <div style="margin-top: 40px; text-align: center; color: rgba(0,230,230,0.5); font-size: 12px; padding: 20px;">
-            <span>🌐 CYBER-NET PROTOCOL v2.0.1 🌐</span><br>
-            <span style="font-size: 10px;">© 2026 ALL RIGHTS RESERVED</span>
-        </div>
-    </div>
 </div>
 
 <script>
-    // ----------------------------------------------------
-    // --- ИНДИКАТОР ПРОКРУТКИ ---
-    // ----------------------------------------------------
-    window.onscroll = function() {
-        updateScrollIndicator();
-    };
 
-    function updateScrollIndicator() {
-        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const scrolled = (winScroll / height) * 100;
-        document.getElementById("scrollIndicator").style.width = scrolled + "%";
+    // Имя пользователя
+    let username = localStorage.getItem("username") || "PlayerOne";
+    localStorage.setItem("username", username);
+    document.getElementById("username").textContent = username;
+
+    // Дата регистрации
+    if (!localStorage.getItem("registerDate")) {
+        localStorage.setItem("registerDate", new Date().toLocaleDateString());
+    }
+    document.getElementById("regDate").textContent =
+        localStorage.getItem("registerDate");
+
+    // Игры
+    let gamesPlayed = parseInt(localStorage.getItem("gamesPlayed")) || 5;
+    localStorage.setItem("gamesPlayed", gamesPlayed);
+    document.getElementById("gamesPlayed").textContent = gamesPlayed;
+
+    // XP
+    let xp = parseInt(localStorage.getItem("xp")) || 350;
+    localStorage.setItem("xp", xp);
+    document.getElementById("xp").textContent = xp;
+
+    // Уровень
+    let level = Math.floor(xp / 200) + 1;
+    document.getElementById("level").textContent = level;
+
+    // Прогресс
+    let progressPercent = (xp % 200) / 200 * 100;
+    document.getElementById("progressBar").style.width = progressPercent + "%";
+
+    // Достижения
+    let achievementText = "Новичок";
+    if (xp > 1000) achievementText = "🏆 Мастер игры";
+    else if (xp > 500) achievementText = "🔥 Опытный игрок";
+
+    document.getElementById("achievements").textContent = achievementText;
+
+    // Статус
+    document.getElementById("status").textContent = "🟢 Онлайн";
+
+    // Аватар
+    let savedAvatar = localStorage.getItem("avatar");
+    if (savedAvatar) {
+        document.getElementById("userAvatar").src = savedAvatar;
     }
 
-    // ----------------------------------------------------
-    // --- СИСТЕМА ОЧКОВ И ПРОГРЕССА ---
-    // ----------------------------------------------------
-
-    // Инициализация очков
-    function initGameScores() {
-        let gameScores = localStorage.getItem('gameScores');
-        if (!gameScores) {
-            const initialScores = {
-                flappyBird: 450,
-                snake: 720
-            };
-            localStorage.setItem('gameScores', JSON.stringify(initialScores));
-        }
-        updateScoreDisplay();
-    }
-
-    // Обновление отображения всех очков и прогрессов
-    function updateScoreDisplay() {
-        const scores = JSON.parse(localStorage.getItem('gameScores')) || {
-            flappyBird: 0,
-            snake: 0
+    document.getElementById("avatarInput").addEventListener("change", function(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function() {
+            document.getElementById("userAvatar").src = reader.result;
+            localStorage.setItem("avatar", reader.result);
         };
-
-        // Обновляем Flappy Bird
-        document.getElementById('flappyScore').textContent = scores.flappyBird + ' XP';
-        const flappyProgress = (scores.flappyBird % 1000) / 10;
-        document.getElementById('flappyProgress').style.width = flappyProgress + '%';
-        const flappyLevel = Math.floor(scores.flappyBird / 1000) + 1;
-        document.getElementById('flappyLevel').textContent = 'LVL ' + flappyLevel;
-
-        // Обновляем Snake
-        document.getElementById('snakeScore').textContent = scores.snake + ' XP';
-        const snakeProgress = (scores.snake % 1000) / 10;
-        document.getElementById('snakeProgress').style.width = snakeProgress + '%';
-        const snakeLevel = Math.floor(scores.snake / 1000) + 1;
-        document.getElementById('snakeLevel').textContent = 'LVL ' + snakeLevel;
-
-        // Общий тотал и прогресс
-        const totalXP = scores.flappyBird + scores.snake;
-        document.getElementById('totalScore').textContent = 'TOTAL: ' + totalXP + ' XP';
-
-        const overallLevel = Math.floor(totalXP / 1000) + 1;
-        document.getElementById('overallLevel').textContent = 'УРОВЕНЬ ' + overallLevel;
-
-        const overallProgress = (totalXP % 1000) / 10;
-        document.getElementById('overallProgress').style.width = overallProgress + '%';
-
-        document.getElementById('nextLevelProgress').textContent =
-            (totalXP % 1000) + '/1000 XP ДО СЛЕД. УРОВНЯ';
-    }
-
-    // Функция для добавления тестовых очков
-    function addTestPoints(game, points) {
-        const scores = JSON.parse(localStorage.getItem('gameScores')) || {
-            flappyBird: 0,
-            snake: 0
-        };
-
-        if (game === 'flappyBird') {
-            scores.flappyBird += points;
-        } else if (game === 'snake') {
-            scores.snake += points;
-        }
-
-        localStorage.setItem('gameScores', JSON.stringify(scores));
-        updateScoreDisplay();
-
-        showMessage(`🎮 +${points} XP ПОЛУЧЕНО!`, 'success');
-    }
-
-    // Функция сброса очков
-    function resetGameScores() {
-        const scores = {
-            flappyBird: 0,
-            snake: 0
-        };
-        localStorage.setItem('gameScores', JSON.stringify(scores));
-        updateScoreDisplay();
-        showMessage('🔄 СТАТИСТИКА СБРОШЕНА', 'success');
-    }
-
-    // ----------------------------------------------------
-    // --- ФУНКЦИЯ СМЕНЫ ПАРОЛЯ ---
-    // ----------------------------------------------------
-    async function changePassword() {
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const messageElement = document.getElementById('passwordMessage');
-
-        if (!newPassword || !confirmPassword) {
-            showMessage('ERROR: ALL FIELDS REQUIRED', 'error');
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            showMessage('ERROR: ENCRYPTION KEYS MISMATCH', 'error');
-            return;
-        }
-
-        if (newPassword.length < 4) {
-            showMessage('ERROR: KEY TOO WEAK (MIN 4 CHARS)', 'error');
-            return;
-        }
-
-        try {
-            const userString = localStorage.getItem("currentUser");
-            if (!userString) {
-                showMessage('ERROR: USER SESSION EXPIRED', 'error');
-                return;
-            }
-
-            const user = JSON.parse(userString);
-
-            const response = await fetch(`http://localhost:8081/api/users/${getUserId()}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    password: newPassword
-                })
-            });
-
-            if (response.ok) {
-                showMessage('✅ SECURITY PROTOCOL UPDATED SUCCESSFULLY', 'success');
-                document.getElementById('newPassword').value = '';
-                document.getElementById('confirmPassword').value = '';
-            } else {
-                const errorData = await response.json();
-                showMessage(`ERROR: ${errorData.message || 'UPDATE FAILED'}`, 'error');
-            }
-
-        } catch (error) {
-            showMessage('ERROR: SERVER CONNECTION FAILED', 'error');
-            console.error('Password change error:', error);
-        }
-    }
-
-    function showMessage(text, type) {
-        const messageElement = document.getElementById('passwordMessage');
-        messageElement.textContent = text;
-        messageElement.className = 'message ' + type;
-
-        setTimeout(() => {
-            messageElement.textContent = '';
-            messageElement.className = 'message';
-        }, 5000);
-    }
-
-    function getUserId() {
-        const userString = localStorage.getItem("currentUser");
-        if (userString) {
-            const user = JSON.parse(userString);
-            return user.id || 1;
-        }
-        return 1;
-    }
-
-    // ----------------------------------------------------
-    // --- НАСТРОЙКИ ИГР ---
-    // ----------------------------------------------------
-    function loadGameSettings() {
-        const fbSettings = JSON.parse(localStorage.getItem('flappyBirdCustomization')) || {};
-        document.getElementById('fbColor').value = fbSettings.color || '#ff00ff';
-        document.getElementById('fbShape').value = fbSettings.shape || 'diamond';
-
-        const snakeSettings = JSON.parse(localStorage.getItem('snakeCustomization')) || {};
-        document.getElementById('snakeHeadColor').value = snakeSettings.headColor || '#ff00ff';
-        document.getElementById('snakeBodyColor').value = snakeSettings.bodyColor || '#800080';
-        document.getElementById('foodColor').value = snakeSettings.foodColor || '#ff0000';
-    }
-
-    function saveFlappyBirdSettings() {
-        const settings = {
-            color: document.getElementById('fbColor').value,
-            shape: document.getElementById('fbShape').value
-        };
-        localStorage.setItem('flappyBirdCustomization', JSON.stringify(settings));
-        showMessage('⚙️ НАСТРОЙКИ FLAPPY BIRD СОХРАНЕНЫ', 'success');
-    }
-
-    function saveSnakeSettings() {
-        const settings = {
-            headColor: document.getElementById('snakeHeadColor').value,
-            bodyColor: document.getElementById('snakeBodyColor').value,
-            foodColor: document.getElementById('foodColor').value
-        };
-        localStorage.setItem('snakeCustomization', JSON.stringify(settings));
-        showMessage('⚙️ НАСТРОЙКИ SNAKE СОХРАНЕНЫ', 'success');
-    }
-
-    // ----------------------------------------------------
-    // --- ИНИЦИАЛИЗАЦИЯ ---
-    // ----------------------------------------------------
-    document.addEventListener("DOMContentLoaded", function() {
-        const userString = localStorage.getItem("currentUser");
-        const profileContainer = document.getElementById("profile");
-        const unauthorizedMessage = document.getElementById("unauthorizedMessage");
-
-        if (userString) {
-            const user = JSON.parse(userString);
-            profileContainer.style.display = "flex";
-
-            const usernameDisplay = user.username || "[ANON_USER]";
-            const emailDisplay = user.email ? "ONLINE | ID: " + user.email : "STATUS: OFFLINE (GUEST)";
-
-            document.getElementById("avatar").textContent = usernameDisplay[0].toUpperCase();
-            document.getElementById("fullName").textContent = usernameDisplay.toUpperCase();
-            document.getElementById("email").textContent = emailDisplay;
-
-            // Инициализируем очки и загружаем настройки
-            initGameScores();
-            loadGameSettings();
-
-            setTimeout(() => {
-                profileContainer.classList.add("show");
-                updateScrollIndicator();
-            }, 100);
-
-        } else {
-            profileContainer.style.display = "none";
-            unauthorizedMessage.style.display = "block";
-            setTimeout(() => {
-                window.location.href = "login";
-            }, 2000);
-        }
+        reader.readAsDataURL(file);
     });
 
-    function goHome() {
-        window.location.href = "http://localhost:8081/";
-    }
-
-    function logout() {
-        localStorage.removeItem("currentUser");
-        window.location.href = "login";
-    }
 </script>
 
 </body>
